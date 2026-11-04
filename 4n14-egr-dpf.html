@@ -1,0 +1,376 @@
+<title>EGR og DPF på 4N14</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Saira+Condensed:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#EFEFEB; --surface:#FFFFFF; --surface-2:#F7F7F4; --surface-3:#E4E5E0;
+  --ink:#191C1B; --ink-2:#5A6160; --ink-3:#98A09E; --line:#C9CDC7; --line-soft:#DDE0DA;
+  --hot:#B8481B; --cool:#276F86; --egr:#8C6410; --ok:#2E7050;
+  --fig-bg:#FBFBF9;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101317; --surface:#191D22; --surface-2:#1E2229; --surface-3:#2A3038;
+    --ink:#E9EAE6; --ink-2:#A6ADAC; --ink-3:#6E7883; --line:#333B44; --line-soft:#272E36;
+    --hot:#FF8B54; --cool:#63C2DA; --egr:#DFB24E; --ok:#68C79B;
+    --fig-bg:#161A1F;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101317; --surface:#191D22; --surface-2:#1E2229; --surface-3:#2A3038;
+  --ink:#E9EAE6; --ink-2:#A6ADAC; --ink-3:#6E7883; --line:#333B44; --line-soft:#272E36;
+  --hot:#FF8B54; --cool:#63C2DA; --egr:#DFB24E; --ok:#68C79B;
+  --fig-bg:#161A1F;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  font-size:16px; line-height:1.6; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:1080px; margin:0 auto; padding:32px 20px 80px; display:flex; flex-direction:column; gap:44px}
+h1,h2,h3{font-family:'Saira Condensed','Arial Narrow',system-ui,sans-serif; font-weight:700; letter-spacing:.01em; text-wrap:balance; margin:0}
+h1{font-size:clamp(38px,7vw,60px); line-height:1.02; text-transform:uppercase}
+h2{font-size:clamp(23px,3.4vw,30px); line-height:1.1; text-transform:uppercase}
+h3{font-size:19px; line-height:1.2; font-weight:600}
+p{margin:0}
+a{color:var(--hot); text-underline-offset:3px; text-decoration-thickness:1px}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--cool); outline-offset:3px; border-radius:3px}
+.eyebrow{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-2)}
+.lede{font-size:clamp(17px,2.1vw,19px); color:var(--ink-2); max-width:62ch}
+header.top{display:flex; flex-direction:column; gap:14px; border-bottom:2px solid var(--ink); padding-bottom:26px}
+section{display:flex; flex-direction:column; gap:18px}
+.sechead{display:flex; align-items:baseline; gap:14px; border-top:1px solid var(--line); padding-top:16px}
+.sechead .num{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-3)}
+.grid{display:grid; gap:14px}
+@media(min-width:720px){.g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:18px 20px; display:flex; flex-direction:column; gap:8px}
+.card .k{font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-2)}
+.card p{font-size:15px}
+.rail{border-left:3px solid var(--hot); background:var(--surface-2); padding:16px 18px; border-radius:0 4px 4px 0; display:flex; flex-direction:column; gap:8px}
+.rail.cool{border-left-color:var(--cool)}
+.rail p,.rail li{font-size:15px}
+table{border-collapse:collapse; width:100%; font-size:14.5px; font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto; border:1px solid var(--line); border-radius:4px; background:var(--surface)}
+th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--line-soft); white-space:nowrap}
+th{font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2); background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:none}
+td.num,td.pn{font-family:'IBM Plex Mono',monospace}
+td.wrap-cell{white-space:normal; min-width:220px}
+figure{margin:0; background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:14px; display:flex; flex-direction:column; gap:12px; overflow-x:auto}
+figure svg.fig{display:block; width:100%; min-width:640px; height:auto; font-family:'IBM Plex Sans','Segoe UI',system-ui,sans-serif}
+figcaption{font-size:14px; color:var(--ink-2); max-width:70ch}
+ul,ol{margin:0; padding-left:22px; display:flex; flex-direction:column; gap:9px}
+li::marker{color:var(--ink-3)}
+.links{list-style:none; padding:0; display:flex; flex-direction:column; gap:0}
+.links li{border-bottom:1px solid var(--line-soft); padding:13px 0; display:flex; flex-direction:column; gap:4px}
+.links li:last-child{border-bottom:none}
+.links a{font-weight:600; font-size:15.5px}
+.links .what{font-size:14px; color:var(--ink-2)}
+.tag{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2); border:1px solid var(--line); border-radius:2px; padding:2px 6px; margin-right:8px}
+.tag.foto{color:var(--hot); border-color:var(--hot)}
+.tag.video{color:var(--cool); border-color:var(--cool)}
+.tag.katalog{color:var(--egr); border-color:var(--egr)}
+footer{border-top:1px solid var(--line); padding-top:18px; font-size:13.5px; color:var(--ink-2); display:flex; flex-direction:column; gap:8px}
+
+  .sheet { fill: var(--fig-bg); }
+  .dg-box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .dg-box-strong { fill: var(--surface-3); stroke: var(--ink-3); stroke-width: 1.5; }
+  .divider { stroke: var(--ink-3); stroke-width: 1.5; }
+  .hatch { stroke: var(--ink-3); stroke-width: 1.5; opacity: .55; }
+  .tap { fill: var(--ink-2); }
+  .dg-t { fill: var(--ink); font-size: 12.5px; }
+  .dg-title { fill: var(--ink); font-size: 13px; font-weight: 600; }
+  .dg-t-sm { fill: var(--ink-2); font-size: 11px; }
+  .lbl-egr { fill: var(--egr); }
+  .hot { stroke: var(--hot); stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .cool { stroke: var(--cool); stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .egr { stroke: var(--egr); stroke-width: 2.5; fill: none; stroke-dasharray: 9 5; stroke-linecap: butt; stroke-linejoin: round; }
+  .sens { stroke: var(--ink-3); stroke-width: 1.2; fill: none; stroke-dasharray: 3 3; }
+  .rule-dash { stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 6 6; }
+  .fill-hot { fill: var(--hot); }
+  .fill-egr { fill: var(--egr); }
+  .fill-cool { fill: var(--cool); }
+</style>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">TL 26689 &middot; Mitsubishi Outlander II (CW1W) &middot; 4N14 2,2 DI-D &middot; Euro&nbsp;5</div>
+  <h1>EGR og DPF<br>på 4N14</h1>
+  <p class="lede">Begge sitter på baksiden av motoren, mot spjeldveggen. EGR-sløyfa går høyt oppe fra eksosmanifolden, gjennom en vannkjølt kjøler og inn i baksiden av innsugsmanifolden. Katalysator og partikkelfilter henger som én kanne rett etter turboen, ikke langt bak under gulvet.</p>
+</header>
+
+<section>
+  <div class="sechead"><span class="num">01</span><h2>Ekte bilder av akkurat denne motoren</h2></div>
+  <div class="rail cool">
+    <p>Disse lenkene viser 4N14-motoren i virkeligheten &mdash; samme motor som i bilen din. Åpne dem i nettleseren; sidene kunne ikke lastes ned og bygges inn her.</p>
+  </div>
+
+  <h3>Video i motorrommet</h3>
+  <ul class="links">
+    <li><span><span class="tag video">video</span><a href="https://www.youtube.com/watch?v=BgmDQ2uoTgw" target="_blank" rel="noopener">Rens av innsugsmanifold på 4N14 (ASX/Outlander)</a></span><span class="what">Innsugsmanifolden av, EGR-røret inn på baksiden av manifolden, og hvor sotet legger seg. Nærmest en omvisning i hele EGR-veien.</span></li>
+    <li><span><span class="tag video">video</span><a href="https://www.youtube.com/shorts/MFTvuNRRwi4" target="_blank" rel="noopener">4N13/4N14 EGR-ventil ut og inn</a></span><span class="what">Kort klipp som viser hvor ventilen sitter og hvordan man kommer til.</span></li>
+    <li><span><span class="tag video">video</span><a href="https://www.youtube.com/watch?v=Ijk4GzCVL94" target="_blank" rel="noopener">Outlander DI-D MIVEC &mdash; rens av EGR-ventil</a></span><span class="what">Demontering og rens, med motorlampe/feilkode som utgangspunkt.</span></li>
+    <li><span><span class="tag video">video</span><a href="https://www.youtube.com/watch?v=xwvb-OkVsHc" target="_blank" rel="noopener">Outlander/ASX &mdash; sjekk av DPF-systemet (P1498, P2463)</a></span><span class="what">De to feilkodene du får når filteret er tett. Viser filteret og målingene.</span></li>
+    <li><span><span class="tag video">video</span><a href="https://www.youtube.com/watch?v=K9SO9BIDpnQ" target="_blank" rel="noopener">Outlander 2.2 &mdash; DPF-rens</a></span><span class="what">Filteret demontert, før/etter gjennomstrømning.</span></li>
+    <li><span><span class="tag video">video</span><a href="https://www.youtube.com/watch?v=TP9aGL3Q1hU" target="_blank" rel="noopener">ASX/Outlander &mdash; tvungen regenerering</a></span><span class="what">Hvordan en regen ser ut og høres ut når den kjøres.</span></li>
+  </ul>
+
+  <h3>Foto av delene, slik de ser ut avmontert</h3>
+  <ul class="links">
+    <li><span><span class="tag foto">foto</span><a href="https://www.proxyparts.com/car-parts-stock/information/part-number/1582a212/part/egr-cooler/partid/14900962/" target="_blank" rel="noopener">EGR-kjøler 1582A212 fra en ASX 2.2 DI-D 4N14</a></span><span class="what">Skrapbilder av kjøleren som den satt: du ser flensen mot eksossiden og kjølevæskestussene.</span></li>
+    <li><span><span class="tag foto">foto</span><a href="https://www.ebay.com/itm/318408684854" target="_blank" rel="noopener">EGR-ventil 1582A554 (original)</a></span><span class="what">Den elektriske ventilen som sitter i EGR-røret inn mot innsuget.</span></li>
+    <li><span><span class="tag foto">foto</span><a href="https://www.ebay.com/itm/185660868864" target="_blank" rel="noopener">EGR-kjøler 1582A212, flere vinkler</a></span><span class="what">Viser formen på kjøleren og hvordan røret bøyer seg rundt bak motoren.</span></li>
+    <li><span><span class="tag foto">foto</span><a href="https://u2autoparts.com/en/1555a958-mitsubishi-asx-1-8-2-2-outlander-2-2-2-3-4n13-4n14-exhaust-manifold/" target="_blank" rel="noopener">Eksosmanifold 1555A958</a></span><span class="what">Støpejernsmanifolden med turboflens og EGR-uttaket. Kjent for å sprekke.</span></li>
+    <li><span><span class="tag foto">foto</span><a href="https://www.ebay.co.uk/itm/176389418977" target="_blank" rel="noopener">Turbo 49335-01122 (TF035, variabel geometri)</a></span><span class="what">Turboen som sitter på manifolden, med DPF-flensen på utløpet.</span></li>
+    <li><span><span class="tag foto">foto</span><a href="https://www.ebay.com/itm/388660670361" target="_blank" rel="noopener">Partikkelfilter for ASX/Outlander 2.2 DI-D</a></span><span class="what">Hele kanna med flens, opplegg og sensoruttak &mdash; formen forteller hvor den sitter.</span></li>
+    <li><span><span class="tag foto">foto</span><a href="https://www.proxyparts.com/car-parts-stock/information/engine-code/4n14/part/engine/partid/9888336/" target="_blank" rel="noopener">Komplett 4N14-motor på lager</a></span><span class="what">Motoren fotografert fra flere sider &mdash; den enkleste måten å se hvor alt sitter i forhold til hverandre.</span></li>
+  </ul>
+
+  <h3>Delekatalog med sprengskisser</h3>
+  <ul class="links">
+    <li><span><span class="tag katalog">katalog</span><a href="https://finndel.no/delinfo.aspx?f=761&amp;dnr=380305" target="_blank" rel="noopener">Finndel.no &mdash; EGR-ventil, motorkode 4N14</a></span><span class="what">Norske skrapdeler med bilde og delenummer, ofte med VIN-treff.</span></li>
+    <li><span><span class="tag katalog">katalog</span><a href="https://www.amayama.com/en/catalogs/mitsubishi/outlander" target="_blank" rel="noopener">Amayama &mdash; original delekatalog (EPC)</a></span><span class="what">Søk opp chassiskoden <strong>CW1W</strong> fra VIN-en og velg gruppene &laquo;EGR system&raquo; og &laquo;exhaust pipe&raquo;. Der ligger Mitsubishis egne sprengskisser med nøyaktig plassering.</span></li>
+    <li><span><span class="tag katalog">katalog</span><a href="https://club.autodoc.co.no/manuals/motor/egr-ventil/mitsubishi/outlander" target="_blank" rel="noopener">Autodoc Club &mdash; bytte av EGR-ventil, steg for steg</a></span><span class="what">Bildeserie på norsk gjennom hele jobben.</span></li>
+  </ul>
+</section>
+
+<section>
+  <div class="sechead"><span class="num">02</span><h2>Hvor det sitter</h2></div>
+  <div class="grid g3">
+    <div class="card"><span class="k">EGR-kjøler</span><p>Vannkjølt, boltet på baksiden av motoren mot spjeldveggen, matet rett fra eksosmanifolden. Kjølevæske inn og ut med egne slanger.</p></div>
+    <div class="card"><span class="k">EGR-ventil</span><p>Elektrisk, sitter i EGR-røret etter kjøleren. Røret bolter seg til <em>baksiden</em> av innsugsmanifolden &mdash; to bolter oppe, to muttere nede, 10 mm.</p></div>
+    <div class="card"><span class="k">DOC + DPF</span><p>Oksidasjonskatalysator og partikkelfilter i én kanne rett etter turboen, bak/under motoren. Derfra flexrør og videre bakover til pottene.</p></div>
+  </div>
+  <figure>
+<svg viewBox="0 0 940 620" class="fig" role="img" aria-label="Motoren sett fra hoyre side: EGR-kjoler og elektrisk EGR-ventil sitter hoyt bak paa motoren mot spjeldveggen, turboen er boltet paa eksosmanifolden bak, og katalysator og partikkelfilter henger som en kanne rett under turboen.">
+  <defs>
+    <marker id="f1-ah-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 Z" class="fill-hot"/></marker>
+    <marker id="f1-ah-egr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 Z" class="fill-egr"/></marker>
+    <marker id="f1-ah-cool" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 Z" class="fill-cool"/></marker>
+  </defs>
+  <rect class="sheet" x="0" y="0" width="940" height="620"/>
+
+  <!-- front-side context -->
+  <rect class="dg-box" x="30" y="300" width="64" height="140" rx="6"/>
+  <text class="dg-t-sm" x="62" y="362" text-anchor="middle">Ladeluft-</text>
+  <text class="dg-t-sm" x="62" y="378" text-anchor="middle">kjoler</text>
+  <path class="cool" d="M94,352 L114,352" marker-end="url(#f1-ah-cool)"/>
+  <rect class="dg-box-strong" x="120" y="330" width="35" height="44" rx="4"/>
+  <text class="dg-t-sm" x="137" y="394" text-anchor="middle">Strupespjeld</text>
+  <rect class="dg-box" x="155" y="255" width="105" height="120" rx="6"/>
+  <text class="dg-t" x="207" y="306" text-anchor="middle">Innsugs-</text>
+  <text class="dg-t" x="207" y="323" text-anchor="middle">manifold</text>
+
+  <!-- engine -->
+  <rect class="dg-box" x="260" y="196" width="300" height="54" rx="6"/>
+  <text class="dg-t" x="410" y="228" text-anchor="middle">Topplokk &#8212; DOHC 16V MIVEC</text>
+  <rect class="dg-box" x="260" y="250" width="300" height="210" rx="8"/>
+  <text class="dg-title" x="410" y="360" text-anchor="middle">4N14 &#183; 2 268 cm&#179;</text>
+  <text class="dg-t-sm" x="410" y="380" text-anchor="middle">tverrstilt &#8212; eksossiden bak</text>
+
+  <!-- exhaust manifold + turbo -->
+  <rect class="dg-box-strong" x="560" y="250" width="82" height="140" rx="6"/>
+  <text class="dg-t" x="601" y="320" text-anchor="middle" transform="rotate(-90 601 320)">Eksosmanifold</text>
+  <rect class="dg-box" x="660" y="262" width="130" height="104" rx="16"/>
+  <circle class="dg-box-strong" cx="725" cy="312" r="30"/>
+  <text class="dg-title" x="725" y="242" text-anchor="middle">Turbo (VGT)</text>
+  <path class="cool" d="M775,192 L775,258" marker-end="url(#f1-ah-cool)"/>
+  <text class="dg-t-sm" x="775" y="184" text-anchor="middle">fra luftfilter</text>
+
+  <!-- EGR loop -->
+  <rect class="dg-box" x="470" y="100" width="170" height="58" rx="6"/>
+  <text class="dg-title" x="555" y="126" text-anchor="middle">EGR-kj&#248;ler</text>
+  <text class="dg-t-sm" x="555" y="144" text-anchor="middle">kj&#248;lev&#230;skekj&#248;lt</text>
+  <rect class="dg-box" x="280" y="100" width="140" height="58" rx="6"/>
+  <text class="dg-title" x="350" y="126" text-anchor="middle">EGR-ventil</text>
+  <text class="dg-t-sm" x="350" y="144" text-anchor="middle">elektrisk</text>
+  <path class="egr" d="M601,250 L601,162" marker-end="url(#f1-ah-egr)"/>
+  <text class="dg-t-sm lbl-egr" x="612" y="212">varm eksos</text>
+  <path class="egr" d="M470,129 L444,129" marker-end="url(#f1-ah-egr)"/>
+  <text class="dg-t-sm lbl-egr" x="445" y="92" text-anchor="middle">kj&#248;lt gass</text>
+  <path class="egr" d="M350,158 L350,180 L207,180 L207,251" marker-end="url(#f1-ah-egr)"/>
+  <text class="dg-t-sm lbl-egr" x="278" y="172" text-anchor="middle">inn i innsuget</text>
+
+  <!-- turbo to canister -->
+  <path class="hot" d="M695,366 L695,396" marker-end="url(#f1-ah-hot)"/>
+
+  <!-- DOC + DPF canister -->
+  <rect class="dg-box-strong" x="655" y="400" width="160" height="118" rx="20"/>
+  <line class="divider" x1="735" y1="400" x2="735" y2="518"/>
+  <line class="hatch" x1="750" y1="418" x2="750" y2="500"/>
+  <line class="hatch" x1="765" y1="418" x2="765" y2="500"/>
+  <line class="hatch" x1="780" y1="418" x2="780" y2="500"/>
+  <line class="hatch" x1="795" y1="418" x2="795" y2="500"/>
+  <text class="dg-title" x="695" y="464" text-anchor="middle">DOC</text>
+  <text class="dg-title" x="775" y="464" text-anchor="middle">DPF</text>
+  <text class="dg-t-sm" x="735" y="540" text-anchor="middle">DOC + DPF i &#233;n kanne, boltet rett under turboen</text>
+  <path class="hot" d="M815,459 L900,459" marker-end="url(#f1-ah-hot)"/>
+  <text class="dg-t-sm" x="905" y="482" text-anchor="end">under gulvet</text>
+
+  <!-- differential pressure sensor -->
+  <rect class="dg-box" x="830" y="280" width="100" height="50" rx="4"/>
+  <text class="dg-t-sm" x="880" y="302" text-anchor="middle">Differansetrykk-</text>
+  <text class="dg-t-sm" x="880" y="318" text-anchor="middle">sensor (&#916;p)</text>
+  <circle class="tap" cx="668" cy="400" r="3.5"/>
+  <circle class="tap" cx="805" cy="400" r="3.5"/>
+  <path class="sens" d="M845,330 L828,378 L805,397"/>
+  <path class="sens" d="M872,330 L872,374 L668,396"/>
+
+  <!-- floor + orientation -->
+  <line class="rule-dash" x1="20" y1="560" x2="920" y2="560"/>
+  <text class="dg-t-sm" x="20" y="578">understell</text>
+  <text class="dg-t-sm" x="20" y="602">&#9664; FRONT (kj&#248;ler)</text>
+  <text class="dg-t-sm" x="920" y="602" text-anchor="end">BAK &#8212; spjeldvegg / kup&#233; &#9654;</text>
+
+  <!-- legend -->
+  <line class="hot" x1="30" y1="508" x2="60" y2="508"/>
+  <text class="dg-t-sm" x="66" y="512">eksos</text>
+  <line class="egr" x1="140" y1="508" x2="170" y2="508"/>
+  <text class="dg-t-sm" x="176" y="512">EGR-gass</text>
+  <line class="cool" x1="270" y1="508" x2="300" y2="508"/>
+  <text class="dg-t-sm" x="306" y="512">friskluft / ladeluft</text>
+  <line class="sens" x1="440" y1="508" x2="470" y2="508"/>
+  <text class="dg-t-sm" x="476" y="512">sensorslange</text>
+</svg>
+<figcaption><strong>Figur 1 &mdash; sett fra h&oslash;yre side.</strong> EGR-sl&oslash;yfa ligger h&oslash;yt bak p&aring; motoren mot spjeldveggen: varm eksos tappes fra manifolden, kj&oslash;les, og g&aring;r inn i baksiden av innsugsmanifolden. Katalysator og partikkelfilter henger som &eacute;n kanne rett under turboen.</figcaption>
+</figure>
+  <figure>
+<svg viewBox="0 0 940 420" class="fig" role="img" aria-label="Gassveien gjennom motoren: friskluft gaar fra luftfilter via turbokompressor, ladeluftkjoler og strupespjeld til innsugsmanifolden, ned i sylindrene, ut i eksosmanifolden, gjennom turbinen og videre til DOC og DPF. EGR tappes fra eksosmanifolden foer turbinen, kjoles i EGR-kjoleren og gaar via EGR-ventilen inn i innsugsmanifolden etter strupespjeldet.">
+  <defs>
+    <marker id="f2-ah-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 Z" class="fill-hot"/></marker>
+    <marker id="f2-ah-egr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 Z" class="fill-egr"/></marker>
+    <marker id="f2-ah-cool" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 Z" class="fill-cool"/></marker>
+  </defs>
+  <rect class="sheet" x="0" y="0" width="940" height="420"/>
+
+  <!-- legend -->
+  <line class="hot" x1="20" y1="46" x2="50" y2="46"/>
+  <text class="dg-t-sm" x="56" y="50">eksos</text>
+  <line class="egr" x1="130" y1="46" x2="160" y2="46"/>
+  <text class="dg-t-sm" x="166" y="50">EGR</text>
+  <line class="cool" x1="230" y1="46" x2="260" y2="46"/>
+  <text class="dg-t-sm" x="266" y="50">friskluft / ladeluft</text>
+
+  <!-- intake row, right to left -->
+  <rect class="dg-box" x="770" y="96" width="150" height="48" rx="6"/>
+  <text class="dg-t" x="845" y="125" text-anchor="middle">Luftfilter</text>
+  <rect class="dg-box" x="580" y="96" width="150" height="48" rx="6"/>
+  <text class="dg-t" x="655" y="125" text-anchor="middle">Turbokompressor</text>
+  <rect class="dg-box" x="390" y="96" width="150" height="48" rx="6"/>
+  <text class="dg-t" x="465" y="125" text-anchor="middle">Ladeluftkj&#248;ler</text>
+  <rect class="dg-box" x="225" y="96" width="140" height="48" rx="6"/>
+  <text class="dg-t" x="295" y="125" text-anchor="middle">Strupespjeld</text>
+  <rect class="dg-box" x="40" y="96" width="160" height="48" rx="6"/>
+  <text class="dg-t" x="120" y="125" text-anchor="middle">Innsugsmanifold</text>
+  <path class="cool" d="M845,64 L845,92" marker-end="url(#f2-ah-cool)"/>
+  <text class="dg-t-sm" x="845" y="56" text-anchor="middle">friskluft</text>
+  <path class="cool" d="M770,120 L734,120" marker-end="url(#f2-ah-cool)"/>
+  <path class="cool" d="M580,120 L544,120" marker-end="url(#f2-ah-cool)"/>
+  <path class="cool" d="M390,120 L369,120" marker-end="url(#f2-ah-cool)"/>
+  <path class="cool" d="M225,120 L204,120" marker-end="url(#f2-ah-cool)"/>
+  <path class="cool" d="M60,144 L60,296" marker-end="url(#f2-ah-cool)"/>
+
+  <!-- EGR band -->
+  <rect class="dg-box" x="110" y="200" width="150" height="48" rx="6"/>
+  <text class="dg-t" x="185" y="229" text-anchor="middle">EGR-ventil</text>
+  <rect class="dg-box" x="290" y="200" width="150" height="48" rx="6"/>
+  <text class="dg-t" x="365" y="229" text-anchor="middle">EGR-kj&#248;ler</text>
+  <path class="egr" d="M330,300 L330,252" marker-end="url(#f2-ah-egr)"/>
+  <path class="egr" d="M290,224 L264,224" marker-end="url(#f2-ah-egr)"/>
+  <path class="egr" d="M185,200 L185,148" marker-end="url(#f2-ah-egr)"/>
+  <text class="dg-t-sm lbl-egr" x="470" y="228">h&#248;ytrykks-EGR, tappet f&#248;r turbinen</text>
+
+  <!-- exhaust row, left to right -->
+  <rect class="dg-box" x="40" y="300" width="150" height="50" rx="6"/>
+  <text class="dg-t" x="115" y="330" text-anchor="middle">Sylinder 1&#8211;4</text>
+  <rect class="dg-box" x="210" y="300" width="150" height="50" rx="6"/>
+  <text class="dg-t" x="285" y="330" text-anchor="middle">Eksosmanifold</text>
+  <rect class="dg-box" x="380" y="300" width="140" height="50" rx="6"/>
+  <text class="dg-t" x="450" y="330" text-anchor="middle">Turbin (VGT)</text>
+  <rect class="dg-box-strong" x="540" y="300" width="120" height="50" rx="6"/>
+  <text class="dg-t" x="600" y="330" text-anchor="middle">DOC</text>
+  <rect class="dg-box-strong" x="680" y="300" width="120" height="50" rx="6"/>
+  <text class="dg-t" x="740" y="330" text-anchor="middle">DPF</text>
+  <path class="hot" d="M190,325 L206,325" marker-end="url(#f2-ah-hot)"/>
+  <path class="hot" d="M360,325 L376,325" marker-end="url(#f2-ah-hot)"/>
+  <path class="hot" d="M520,325 L536,325" marker-end="url(#f2-ah-hot)"/>
+  <path class="hot" d="M660,325 L676,325" marker-end="url(#f2-ah-hot)"/>
+  <path class="hot" d="M800,325 L895,325" marker-end="url(#f2-ah-hot)"/>
+  <text class="dg-t-sm" x="895" y="348" text-anchor="end">midt- og bakpotte</text>
+
+  <!-- sensors -->
+  <circle class="tap" cx="528" cy="325" r="4"/>
+  <path class="sens" d="M528,300 L528,284"/>
+  <text class="dg-t-sm" x="528" y="277" text-anchor="middle">eksostemp.-sensor</text>
+  <path class="sens" d="M540,372 L540,384 L800,384 L800,372"/>
+  <text class="dg-t-sm" x="670" y="404" text-anchor="middle">differansetrykksensor over DOC + DPF</text>
+  <path class="sens" d="M115,282 L115,296"/>
+  <text class="dg-t-sm" x="115" y="275" text-anchor="middle">etterinnspr&#248;ytning ved regen.</text>
+</svg>
+<figcaption><strong>Figur 2 &mdash; gassveien og sensorene.</strong> EGR tappes f&oslash;r turbinen (h&oslash;ytrykks-EGR) og slippes inn etter strupespjeldet. DOC og DPF st&aring;r i serie rett etter turbinen, med eksostemperatursensor foran og differansetrykksensor over.</figcaption>
+</figure>
+</section>
+
+<section>
+  <div class="sechead"><span class="num">03</span><h2>Bilen din</h2></div>
+  <div class="tw"><table>
+    <tbody>
+      <tr><th scope="row">Regnr</th><td class="pn">TL 26689</td><td class="wrap-cell">Registrert første gang 09.03.2011</td></tr>
+      <tr><th scope="row">VIN</th><td class="pn">JMBXJCW1WBZ000670</td><td class="wrap-cell">Chassiskode <strong>CW1W</strong> &mdash; bruk denne i delekatalogene</td></tr>
+      <tr><th scope="row">Motor</th><td class="pn">4N14</td><td class="wrap-cell">2 268 cm&sup3;, DOHC 16V MIVEC, Denso common rail</td></tr>
+      <tr><th scope="row">Effekt</th><td class="num">103 kW / 138 hk</td><td class="wrap-cell">4N14 fantes i 103, 110 og 130 kW &mdash; samme turbofamilie (49335-0112x)</td></tr>
+      <tr><th scope="row">Euroklasse</th><td class="pn">Euro 5</td><td class="wrap-cell">EF 715/2007*EF 459/2012 &mdash; DPF fra fabrikk</td></tr>
+      <tr><th scope="row">Girkasse</th><td>Manuell</td><td class="wrap-cell">&nbsp;</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rail">
+    <p><strong>«Partikkelfilter: ---» i vognkortet betyr ikke at bilen mangler DPF.</strong> Feltet er bare ikke utfylt i registeret. En Euro 5-diesel fra 2011 har filter fra fabrikk, og 4N14 bruker et katalysert filter &mdash; ingen Eolys-additiv og ingen additivtank, i motsetning til de PSA-baserte 2.2-erne i Outlander før juli 2010. Det er én av grunnene til at det er verdt å slå fast at dette faktisk er en 4N14.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="num">04</span><h2>Delenumre å ta med til delelageret</h2></div>
+  <div class="tw"><table>
+    <thead><tr><th>Del</th><th>Nummer</th><th>Merknad</th></tr></thead>
+    <tbody>
+      <tr><td>EGR-ventil</td><td class="pn">1582A554</td><td class="wrap-cell">Erstatter 1582A260 / K5T74091, også 1582A440 og 1582A476</td></tr>
+      <tr><td>EGR-kjøler</td><td class="pn">1582A212</td><td class="wrap-cell">Deles med 4N13 (1.8)</td></tr>
+      <tr><td>Eksosmanifold</td><td class="pn">1555A958</td><td class="wrap-cell">Støpejern, kjent for sprekker</td></tr>
+      <tr><td>Turbo</td><td class="pn">1515A238 &middot; 49335-0112x</td><td class="wrap-cell">TF035 med variabel geometri</td></tr>
+      <tr><td>Differansetrykksensor</td><td class="pn">1865A210 / 1865A176</td><td class="wrap-cell">To slanger over filteret &mdash; sjekk at de ikke er sprukne</td></tr>
+      <tr><td>Partikkelfilter</td><td class="pn">1584A672</td><td class="wrap-cell">Vanligste OE-nummer i 4N14-familien &mdash; må kontrolleres mot VIN</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lede">Delenumre er samlet fra delekataloger, ikke fra Mitsubishis eget system for denne VIN-en. Få dem bekreftet mot chassisnummeret før du bestiller.</p>
+</section>
+
+<section>
+  <div class="sechead"><span class="num">05</span><h2>Det som ryker på denne motoren</h2></div>
+  <div class="grid g2">
+    <div class="card"><span class="k">EGR-kjøleren lekker</span><p>Klassikeren på 4N14. Kjølevæske forsvinner uten synlig lekkasje, hvit røyk, og etter hvert vann i eksossystemet. Trykktest kjølesystemet før du leter andre steder.</p></div>
+    <div class="card"><span class="k">EGR-ventil og innsug soter igjen</span><p>Sotet legger seg i røret og i innsugsmanifolden. Gir ujevn tomgang, redusert effekt og feilkoder på EGR-styring.</p></div>
+    <div class="card"><span class="k">Eksosmanifolden sprekker</span><p>Støpejernet slår sprekker, ofte ved turboflensen. Tikkende lyd kald, eksoslukt, og turboen får ikke trykket den skal.</p></div>
+    <div class="card"><span class="k">Avbrutt regenerering</span><p>Etterinnsprøytningen sprer diesel forbi ringene og ned i oljen. Stigende oljenivå og dieselstank i oljen er varsel &mdash; da skal oljen skiftes, ikke bare fylles.</p></div>
+    <div class="card"><span class="k">Differansetrykksensor lyver</span><p>Sprukne slanger eller trøtt sensor gjør at styreenheten ikke starter regenerering. Ender som P1498 eller P2463.</p></div>
+    <div class="card"><span class="k">VGT-aktuator setter seg</span><p>Sot binder skovlene i turbinhuset. Merkes som manglende trekk og ladetrykksfeil, gjerne sammen med tett filter.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="num">06</span><h2>Slik bekrefter du plasseringen på bilen</h2></div>
+  <ol>
+    <li>Åpne panseret og se ned langs baksiden av motoren mot spjeldveggen. EGR-kjøleren er den kantete boksen med to kjølevæskeslanger; røret fra den går bort til innsugsmanifolden med den elektriske ventilen i.</li>
+    <li>Følg eksosmanifolden til turboen. Rett etter turboutløpet skal det stå en tykk kanne &mdash; det er katalysator og partikkelfilter i ett.</li>
+    <li>To tynne slanger fra kanna opp til en liten sensor på brakett: det er differansetrykksensoren, og den bekrefter at du ser på filteret.</li>
+    <li>Les ut med diagnoseverktøy: sotmengde, kjørt distanse siden siste regen og eksostemperatur før filteret sier mer om tilstanden enn noe visuelt.</li>
+  </ol>
+</section>
+
+<footer>
+  <p>Skjematikken over er tegnet ut fra hvordan 4N14 er bygget, ikke kopiert fra Mitsubishis verkstedhåndbok &mdash; håndboka lot seg ikke åpne herfra. Nøyaktig brakettplassering og slangeføring bør kontrolleres mot bilen eller mot MUT-III / verkstedhåndboka for CW1W.</p>
+  <p>Sist oppdatert 19.08.2026.</p>
+</footer>
+
+</div>

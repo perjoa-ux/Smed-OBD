@@ -82,3 +82,37 @@ opprette en egen MCP-tilkobling. Sjekk dette i ChatGPT-grensesnittet.
 
 **Eksponert enhetsnøkkel:** Ved publisering ble `SMED_DEVICE_TOKEN` synlig i
 skjermbilder. Roter den på Render og oppdater feltet i Bluefy før ordinær bruk.
+
+## GitHub-bro for ChatGPT Plus (uten egen MCP-installasjon)
+
+GitHub-pluginen kan skrive diagnosekommandoer til en **egen gren**:
+`smed-command-queue`, fil `queue/command.json`. Grenen er adskilt fra
+`main` slik at kommandoendringer ikke deployer Render på nytt.
+
+Eksempel på **kun** en lesekommando, med en ny unik `id` og en
+`expires_at` innen 15 minutter (UTC ISO8601):
+
+```json
+{
+  "version": 1,
+  "id": "test-010c-001",
+  "command": "010C",
+  "expires_at": "2026-11-09T09:00:00Z"
+}
+```
+
+Serveren spør GitHub hvert 10. sekund. Når Bluefy har aktiv bro, godtar
+serveren kun kommandoer fra sin eksisterende **lese-allowlist**, én om gangen.
+Serveren skriver `SMED_GITHUB_QUEUED` og
+`SMED_GITHUB_RESULT` til **private Render-logger**. ChatGPT kan lese
+disse via den allerede tilkoblede Render-pluginen, uten en registrert
+egen MCP-plugin. **Ingen ECU-svar legges i det offentlige GitHub-repositoriet.**
+
+Et nytt oppdrag skal alltid ha ny ID. Det må ha kort gyldighet og må aldri
+inneholde hemmeligheter. Når det er avsluttet, kan oppdraget erstattes
+med `{"version":1,"id":"idle","command":"","expires_at":"2000-01-01T00:00:00Z"}`.
+
+Dette er en testet kodebane for asynkron **lesediagnostikk**; end-to-end
+kommunikasjon med ECU må bekreftes mens KDIAG er tilkoblet i Bluefy.
+Sletting av P252F og nullstilling av oljeberegning er fortsatt ikke aktivert
+via fjernbroen.

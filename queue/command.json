@@ -1,7 +1,6 @@
 {
   "version": 1,
-  "id": "github-transport-smoke-20261109",
-  "command": "ATI",
-  "expires_at": "2026-11-09T00:00:00Z",
-  "note": "Deliberately expired; no ECU command is to run. Checks GitHub to Render transport."
+  "id": "p252f-read-2115-20261109-0901",
+  "command": "2115",
+  "expires_at": "2026-11-09T09:11:26Z"
 }

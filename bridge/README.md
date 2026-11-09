@@ -42,7 +42,7 @@ iPhone bruker `POST /device/hello`, `GET /device/next`,
 ### Sikkerhetsgrenser
 
 - Bare faste lesekommandoer og 21XX-profilblokkene er tillatt.
-- Ingen eksterne reset-, DPF-, injektor- eller minneskrivefunksjoner.
+- Standard OBD feilkodesletting (modus 04) kan forespørres gjennom GitHub, men krever to lokale bekreftelser i Bluefy. Ingen generelle MUT-III skrivekommandoer, DPF- eller injektorrutiner.
 - Kommandoer køes én om gangen, med 60 sekunders tidsgrense.
 - Oppgaver og svar ligger i minnet og går tapt ved serverrestart.
 - Fungerer ikke uten en aktiv, tilkoblet iPhone.
@@ -58,7 +58,7 @@ iPhone bruker `POST /device/hello`, `GET /device/next`,
 Endepunkt: `https://smed-obd-i2kp.onrender.com/mcp`.
 
 Verktøy: `smed_bridge_status`, `smed_ecu_command`, `smed_command_result`.
-Kun lesekommandoer er tillatt; ingen P252F-sletting eller reset er aktivert via MCP.
+MCP støtter fortsatt kun lesekommandoer. GitHub-kommandobroen kan i tillegg be Bluefy om standard OBD-sletting (04), som krever to lokale bekreftelser. Mitsubishi oljefortynningsreset er fortsatt ikke aktivert.
 
 Autentisering: OAuth med PKCE (S256), offentlig klientregistrering og refresh-token.
 ChatGPT-klienten videresendes til serverens autorisasjonsside. **Kun der** fyller
@@ -102,7 +102,7 @@ Eksempel på **kun** en lesekommando, med en ny unik `id` og en
 ```
 
 Serveren spør GitHub hvert 10. sekund. Når Bluefy har aktiv bro, godtar
-serveren kun kommandoer fra sin eksisterende **lese-allowlist**, én om gangen.
+serveren kommandoer fra **lese-allowlisten**, og én særskilt skriveoperasjon som må godkjennes lokalt, én om gangen.
 Serveren skriver `SMED_GITHUB_QUEUED` og
 `SMED_GITHUB_RESULT` til **private Render-logger**. ChatGPT kan lese
 disse via den allerede tilkoblede Render-pluginen, uten en registrert
@@ -116,3 +116,38 @@ Dette er en testet kodebane for asynkron **lesediagnostikk**; end-to-end
 kommunikasjon med ECU må bekreftes mens KDIAG er tilkoblet i Bluefy.
 Sletting av P252F og nullstilling av oljeberegning er fortsatt ikke aktivert
 via fjernbroen.
+
+## v0.16 — kontrollert skrivetilgang via GitHub
+
+GitHub-transporten har nå **én konkret skrivefunksjon**: `clear_obd_dtc`
+(OBD/J1979 modus `04`). Denne er en standard prosedyre for å slette
+utslippsrelaterte feilkoder, freeze-frame og readiness-status. Den
+nullstiller **ikke** MUT-III sin lagrede verdi for beregnet oljenivå.
+
+Skriveforespørsel i `smed-command-queue:queue/command.json`:
+```json
+{
+  "version": 1,
+  "id": "unik-oppgave-id",
+  "operation": "clear_obd_dtc",
+  "confirmation": "REQUEST_ON_DEVICE_CONFIRMATION",
+  "expires_at": "FREMTIDIG-UTC-ISO8601-INNEN-15-MIN"
+}
+```
+Enheten må være aktiv. Bluefy v0.16 **spør to ganger** før den sender
+`04`. Dersom brukeren avslår, kommer ingen ECU-skriving. Resultat må
+inneholde `44` (positiv svaridentifikator) for at operasjonen skal
+rapporteres som bekreftet. Alle resultater havner i Render-logger.
+
+**Ingen rå-skrivekommandoer** kan legges i kommandokøen. Kun den eksakte
+operasjonsidentifikatoren er tillatt. Klienten må bruke oppdatert
+`index.html` v0.16 i Bluefy. Den gamle v0.15-klienten avviser slike
+fjernkommandoer.
+
+### P252F: separat, ikke ferdigstilt skriveoperasjon
+Mitsubishi-dokumentasjonen bekrefter behovet for å initialisere
+læreverdien til oljefortynnings-/beregnet oljenivå etter oljeskift,
+**men ikke den nøyaktige HEX-forespørselen for ECU SW 1860B61405**.
+Derfor skal det IKKE gjøres et ubekreftet MUT-III råskriv til bilen.
+Når den eksakte resetsekvensen er verifisert kan den legges inn som en
+ny, navngitt, tillatelsesstyrt operasjon og testes.

@@ -112,3 +112,14 @@ Denne filen samler dagens samtaletråder og de tekniske resultatene for **Smed-O
 - **Ikke implementert:** fjernstyrt ECU-feilkodesletting, reset av ECU-beregnet oljenivå og tilsvarende skrivefunksjoner.
 
 Denne statusfilen inneholder **ingen hemmelige tokens**.
+
+## Oppdatering samme dag — skrivefunksjoner v0.16
+
+- Implementert og publisert: **én** navngitt ekstern ECU-skriveoperasjon via GitHub-køen: `clear_obd_dtc` → standard OBD modus `04`.
+- Serveren tillater ikke generelle rå-skrivekommandoer; kun operasjonen med eksakt identifikator og eksplisitt `REQUEST_ON_DEVICE_CONFIRMATION`.
+- Bluefy-app v0.16 viser to lokale bekreftelser før kommando `04` sendes.
+- Svaret sjekkes etter positiv ECU-kvittering `44`; resultat logges i private Render-logger.
+- Vellykket syntakskontroll av både server og app, samt publisering på Render med status **Live** for commit `13b76971484dbc50a8291b4d55795f542ca92367`.
+- **Ikke utført mot bilen** i denne arbeidsøkten: ingen ECU-kommando, ingen sletting.
+- **Mitsubishi oljefortynnings-/beregnet nivå-reset er fortsatt IKKE implementert**, da eksakt MUT-III skrivepayload for denne ECU ikke er bekreftet. Det er en separat rutine og blir ikke erstattet av modus 04.
+- Bruk oppdatert Smed-OBD v0.16 fra `https://smed-obd-i2kp.onrender.com` i Bluefy. Eldre v0.15 vil avvise fjernsletting.

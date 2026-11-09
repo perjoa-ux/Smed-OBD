@@ -64,6 +64,8 @@ function expire() {
     if (task.expires <= now && task.state !== 'done') {
       task.state = 'expired';
       task.response = 'Timeout waiting for iPhone';
+      if(task.githubId) logGithub('RESULT',{id:task.githubId,task_id:task.id,
+        command:task.command,ok:false,response:task.response});
     }
     if (task.created + 300000 < now) tasks.delete(id);
   }
@@ -238,6 +240,64 @@ function mcpHandle(request) {
   return err(-32601,'Method not found');
 }
 
+
+// GitHub-connector command transport. The command branch does not trigger Render redeploy.
+// Only the repository owner can update queue/command.json; data in this branch is public,
+// so NEVER include credentials, VIN, private notes or ECU responses in the command file.
+const GITHUB_QUEUE_URL='https://raw.githubusercontent.com/perjoa-ux/Smed-OBD/smed-command-queue/queue/command.json';
+let githubLastJob = '';
+let githubBusy = false;
+let githubPollError = '';
+function logGithub(kind, fields={}) {
+  console.log('SMED_GITHUB_'+kind+' '+JSON.stringify(fields));
+}
+async function pollGithubQueue() {
+  if(githubBusy) return;
+  githubBusy=true;
+  try {
+    const response=await fetch(GITHUB_QUEUE_URL+'?cache='+Date.now(), {
+      headers:{'Accept':'application/json','Cache-Control':'no-cache','User-Agent':'SmedOBD-RenderBridge/0.17'},
+      signal:AbortSignal.timeout(6500)
+    });
+    if(!response.ok) throw new Error('GitHub queue HTTP '+response.status);
+    const raw=await response.text();
+    if(raw.length>2048) throw new Error('GitHub queue too large');
+    const job=JSON.parse(raw);
+    if(typeof job.id!=='string'||typeof job.command!=='string'||typeof job.expires_at!=='string')
+      throw new Error('Invalid GitHub queue schema');
+    if(githubPollError){logGithub('QUEUE_RECOVERED');githubPollError='';}
+    if(!job.id||job.id===githubLastJob||!job.command) return;
+    if(!/^[a-zA-Z0-9_-]{1,80}$/.test(job.id)) return;
+    const expires=Date.parse(job.expires_at);
+    if(!Number.isFinite(expires)||expires<Date.now()||expires>Date.now()+15*60*1000) {
+      githubLastJob=job.id;
+      logGithub('SKIPPED',{id:job.id,reason:'expired_or_invalid_expiration'});
+      return;
+    }
+    const command=job.command.trim().toUpperCase();
+    if(!ALLOWED.has(command)){
+      githubLastJob=job.id;
+      logGithub('REJECTED',{id:job.id,reason:'not_on_read_allowlist'});
+      return;
+    }
+    if(Date.now()-lastHello>=15000) return;
+    expire();
+    if([...tasks.values()].some(t=>t.state==='running'||t.state==='queued')) return;
+    const task={id:randomUUID(),githubId:job.id,command,created:Date.now(),
+      expires:Math.min(Date.now()+TTL_MS,expires),state:'queued'};
+    tasks.set(task.id,task);
+    queue.push(task.id);
+    githubLastJob=job.id;
+    logGithub('QUEUED',{id:job.id,task_id:task.id,command});
+  }catch(err){
+    const message=String(err.message||err).slice(0,160);
+    if(message!==githubPollError) {githubPollError=message;logGithub('POLL_ERROR',{message});}
+  }finally {githubBusy=false;}
+}
+setInterval(pollGithubQueue,10000);
+setTimeout(pollGithubQueue,2000);
+logGithub('QUEUE_CONFIGURED',{branch:'smed-command-queue',mode:'read_only'});
+
 const server = createServer(async (req,res) => {
   const origin = req.headers.origin || '';
   if (origin && (ALLOWED_ORIGIN === '*' || ALLOWED_ORIGIN.split(',').map(s=>s.trim()).includes(origin))) {
@@ -307,6 +367,8 @@ const server = createServer(async (req,res) => {
       task.response=data.response;
       task.ok=data.ok;
       task.state='done';
+      if (task.githubId) logGithub('RESULT',{id:task.githubId,task_id:task.id,
+        command:task.command,ok:task.ok,response:task.response.slice(0,2048)});
       return reply(res,200,{ok:true});
     }
     if (path === '/agent/command' && req.method === 'POST') {

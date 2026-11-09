@@ -1,7 +1,12 @@
 import { createServer } from 'node:http';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 
 const PORT = Number(process.env.PORT || 8080);
+const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const STATIC_FILES = new Map([['/', 'index.html'], ['/index.html', 'index.html'], ['/4n14-egr-dpf.html', '4n14-egr-dpf.html']]);
 const DEVICE_TOKEN = process.env.SMED_DEVICE_TOKEN || '';
 const AGENT_TOKEN = process.env.SMED_AGENT_TOKEN || '';
 const ALLOWED_ORIGIN = process.env.SMED_ALLOWED_ORIGIN || '*';
@@ -75,6 +80,17 @@ const server = createServer(async (req,res) => {
   }
   if (req.method === 'OPTIONS') {res.writeHead(204);return res.end();}
   const path = new URL(req.url,'http://localhost').pathname;
+  if (req.method === 'GET' && STATIC_FILES.has(path)) {
+    try {
+      const file = await readFile(resolve(PROJECT_ROOT, STATIC_FILES.get(path)));
+      res.writeHead(200, {'Content-Type':'text/html; charset=utf-8',
+        'Cache-Control':'no-cache', 'X-Content-Type-Options':'nosniff',
+        'Referrer-Policy':'no-referrer'});
+      return res.end(file);
+    } catch {
+      return reply(res,500,{error:'Web application unavailable'});
+    }
+  }
   if (path === '/health' && req.method === 'GET')
     return reply(res,200,{status:'ok', bridge:'smed-obd',device_online:Date.now()-lastHello<15000});
   const role = path.startsWith('/device/') ? 'device' : path.startsWith('/agent/') ? 'agent' : null;

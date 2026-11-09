@@ -72,7 +72,7 @@ function expire() {
 // Stateless OAuth 2.1 (PKCE) and Streamable HTTP MCP for SMED-OBD.
 // No agent credential is returned to the browser or embedded in application HTML.
 // Rotate SMED_AGENT_TOKEN after any suspected credential exposure.
-const b64 = value => Buffer.from(typeof value === 'string' ? value : JSON.stringify(value)).toString('base64url');
+const b64 = value => (Buffer.isBuffer(value) ? value : Buffer.from(typeof value === 'string' ? value : JSON.stringify(value))).toString('base64url');
 const unb64 = value => Buffer.from(value, 'base64url').toString('utf8');
 function signed(payload) {
   const data=b64(payload);

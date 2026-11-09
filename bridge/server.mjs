@@ -30,6 +30,8 @@ if (DEVICE_TOKEN.length < 24 || AGENT_TOKEN.length < 24 || DEVICE_TOKEN === AGEN
 let lastHello = 0;
 let lastDeviceVersion = null;
 let lastDeviceAuthFailure = 0;
+const scanSessions = new Map();
+let latestScanId = null;
 let queue = [];
 const tasks = new Map();
 
@@ -375,7 +377,10 @@ const server = createServer(async (req,res) => {
       device_version:lastDeviceVersion,
       github_queue_id:githubLatestJob,
       github_last_fetched_seconds:githubLastFetched?Math.floor((Date.now()-githubLastFetched)/1000):null,
-      github_error:githubPollError||null});
+      github_error:githubPollError||null,
+      scan_latest:latestScanId,
+      scan_status:latestScanId?(scanSessions.get(latestScanId)?.status||null):null,
+      scan_read_count:latestScanId?(scanSessions.get(latestScanId)?.read||0):0});
   const role = path.startsWith('/device/') ? 'device' : path.startsWith('/agent/') ? 'agent' : null;
   if (!role) return reply(res,404,{error:'Not found'});
   if (!authorized(req,role)) {
@@ -394,6 +399,42 @@ const server = createServer(async (req,res) => {
       lastDeviceVersion=typeof data.version==='string'?data.version.slice(0,20):'unknown';
       console.log('SMED_DEVICE_CONNECTED '+JSON.stringify({version:lastDeviceVersion}));
       return reply(res,200,{ok:true,read_only:false,operations:['read','clear_obd_dtc_with_local_confirmation']});
+    }
+    if (path === '/device/scan' && req.method === 'POST') {
+      const data=await body(req);
+      if(typeof data.id!=='string'||!/^scan-[A-Za-z0-9_-]{8,64}$/.test(data.id))
+        return reply(res,400,{error:'Invalid scan ID'});
+      if(!['started','block','completed','interrupted'].includes(data.event))
+        return reply(res,400,{error:'Invalid scan event'});
+      let scan=scanSessions.get(data.id);
+      if(!scan){
+        if(data.event!=='started')return reply(res,409,{error:'Start scan first'});
+        scan={started:Date.now(),status:'running',read:0,errors:0,total:Number(data.total)||0,last:null};
+        scanSessions.set(data.id,scan);
+        latestScanId=data.id;
+        console.log('SMED_SCAN_STARTED '+JSON.stringify({id:data.id,total:scan.total,version:data.version}));
+      }
+      if(data.event==='block'){
+        const command=String(data.command||'').toUpperCase();
+        if(!/^(?:21[0-9A-F]{2}|0[137A][0-9A-F]{0,2})$/.test(command))
+          return reply(res,400,{error:'Invalid scan command'});
+        if(typeof data.response!=='string'||data.response.length>4096)
+          return reply(res,400,{error:'Invalid scan response'});
+        const ok=data.ok===true;
+        scan.read++;
+        if(!ok)scan.errors++;
+        scan.last=command;
+        console.log('SMED_SCAN_BLOCK '+JSON.stringify({id:data.id,command,ok,response:data.response.slice(0,1800)}));
+      }
+      if(data.event==='completed'||data.event==='interrupted'){
+        scan.status=data.event;
+        console.log('SMED_SCAN_FINISHED '+JSON.stringify({id:data.id,status:scan.status,read:scan.read,errors:scan.errors,total:scan.total}));
+      }
+      if(scanSessions.size>15){
+        const oldest=scanSessions.keys().next().value;
+        if(oldest!==latestScanId)scanSessions.delete(oldest);
+      }
+      return reply(res,200,{ok:true,id:data.id,status:scan.status,read:scan.read,total:scan.total});
     }
     if (path === '/device/next' && req.method === 'GET') {
       lastHello=Date.now();

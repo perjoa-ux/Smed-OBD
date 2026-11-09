@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: smed-obd
+    runtime: node
+    plan: starter
+    buildCommand: "npm --prefix bridge install"
+    startCommand: "node bridge/server.mjs"
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SMED_DEVICE_TOKEN
+        generateValue: true
+      - key: SMED_AGENT_TOKEN
+        generateValue: true

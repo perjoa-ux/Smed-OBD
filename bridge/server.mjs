@@ -244,7 +244,7 @@ function mcpHandle(request) {
 // GitHub-connector command transport. The command branch does not trigger Render redeploy.
 // Only the repository owner can update queue/command.json; data in this branch is public,
 // so NEVER include credentials, VIN, private notes or ECU responses in the command file.
-const GITHUB_QUEUE_URL='https://raw.githubusercontent.com/perjoa-ux/Smed-OBD/smed-command-queue/queue/command.json';
+const GITHUB_QUEUE_URL='https://api.github.com/repos/perjoa-ux/Smed-OBD/contents/queue/command.json?ref=smed-command-queue';
 let githubLastJob = '';
 let githubBusy = false;
 let githubPollError = '';
@@ -257,11 +257,13 @@ async function pollGithubQueue() {
   githubBusy=true;
   try {
     const response=await fetch(GITHUB_QUEUE_URL+'?cache='+Date.now(), {
-      headers:{'Accept':'application/json','Cache-Control':'no-cache','User-Agent':'SmedOBD-RenderBridge/0.17'},
+      headers:{'Accept':'application/vnd.github+json','Cache-Control':'no-cache','User-Agent':'SmedOBD-RenderBridge/0.17'},
       signal:AbortSignal.timeout(6500)
     });
     if(!response.ok) throw new Error('GitHub queue HTTP '+response.status);
-    const raw=await response.text();
+    const api=await response.json();
+    if(api.encoding!=='base64'||typeof api.content!=='string') throw new Error('Unexpected GitHub API response');
+    const raw=Buffer.from(api.content,'base64').toString('utf8');
     if(raw.length>2048) throw new Error('GitHub queue too large');
     const job=JSON.parse(raw);
     if (!githubEverFetched) { githubEverFetched=true;logGithub('QUEUE_FETCHED',{id:String(job.id||'').slice(0,80)}); }
@@ -296,7 +298,8 @@ async function pollGithubQueue() {
     if(message!==githubPollError) {githubPollError=message;logGithub('POLL_ERROR',{message});}
   }finally {githubBusy=false;}
 }
-setInterval(pollGithubQueue,10000);
+// Public GitHub API: 60 unauthenticated requests/hour. 75s polling stays below that ceiling.
+setInterval(pollGithubQueue,75000);
 setTimeout(pollGithubQueue,2000);
 logGithub('QUEUE_CONFIGURED',{branch:'smed-command-queue',mode:'read_only'});
 

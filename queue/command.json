@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "id": "initial-disabled",
+  "command": "",
+  "expires_at": "2026-11-09T00:00:00Z",
+  "note": "GitHub read-only ECU command queue. This initial entry never runs."
+}

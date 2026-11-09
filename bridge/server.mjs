@@ -65,7 +65,7 @@ function expire() {
       task.state = 'expired';
       task.response = 'Timeout waiting for iPhone';
       if(task.githubId) logGithub('RESULT',{id:task.githubId,task_id:task.id,
-        command:task.command,ok:false,response:task.response});
+        command:task.command,operation:task.operation||'read',ok:false,response:task.response});
     }
     if (task.created + 300000 < now) tasks.delete(id);
   }
@@ -265,7 +265,7 @@ async function pollGithubQueue() {
     if(raw.length>2048) throw new Error('GitHub queue too large');
     const job=JSON.parse(raw);
     if (!githubEverFetched) { githubEverFetched=true;logGithub('QUEUE_FETCHED',{id:String(job.id||'').slice(0,80)}); }
-    if(typeof job.id!=='string'||typeof job.command!=='string'||typeof job.expires_at!=='string')
+    if(typeof job.id!=='string'||typeof job.expires_at!=='string')
       throw new Error('Invalid GitHub queue schema');
     if(githubPollError){logGithub('QUEUE_RECOVERED');githubPollError='';}
     if(!job.id||job.id===githubLastJob||!job.command) return;
@@ -276,21 +276,25 @@ async function pollGithubQueue() {
       logGithub('SKIPPED',{id:job.id,reason:'expired_or_invalid_expiration'});
       return;
     }
-    const command=job.command.trim().toUpperCase();
-    if(!ALLOWED.has(command)){
+    // Explicit named operations only: generic ECU writes are never accepted.
+    const isWrite=job.operation==='clear_obd_dtc';
+    const command=isWrite ? '04' : (typeof job.command==='string'?job.command.trim().toUpperCase():'');
+    if ((job.operation && !isWrite) || (!isWrite && !ALLOWED.has(command)) ||
+        (isWrite && job.confirmation!=='REQUEST_ON_DEVICE_CONFIRMATION')) {
       githubLastJob=job.id;
-      logGithub('REJECTED',{id:job.id,reason:'not_on_read_allowlist'});
+      logGithub('REJECTED',{id:job.id,reason:'not_on_command_allowlist'});
       return;
     }
     if(Date.now()-lastHello>=15000) return;
     expire();
     if([...tasks.values()].some(t=>t.state==='running'||t.state==='queued')) return;
-    const task={id:randomUUID(),githubId:job.id,command,created:Date.now(),
-      expires:Math.min(Date.now()+TTL_MS,expires),state:'queued'};
+    const task={id:randomUUID(),githubId:job.id,command,
+      operation:isWrite?'clear_obd_dtc':'read',
+      created:Date.now(),expires:Math.min(Date.now()+TTL_MS,expires),state:'queued'};
     tasks.set(task.id,task);
     queue.push(task.id);
     githubLastJob=job.id;
-    logGithub('QUEUED',{id:job.id,task_id:task.id,command});
+    logGithub('QUEUED',{id:job.id,task_id:task.id,command,operation:task.operation});
   }catch(err){
     const message=String(err.message||err).slice(0,160);
     if(message!==githubPollError) {githubPollError=message;logGithub('POLL_ERROR',{message});}
@@ -299,7 +303,7 @@ async function pollGithubQueue() {
 // Raw GitHub branch may cache new commits briefly; each job must expire within 15 minutes.
 setInterval(pollGithubQueue,10000);
 setTimeout(pollGithubQueue,2000);
-logGithub('QUEUE_CONFIGURED',{branch:'smed-command-queue',mode:'read_only'});
+logGithub('QUEUE_CONFIGURED',{branch:'smed-command-queue',mode:'read_and_confirmed_obd_clear'});
 
 const server = createServer(async (req,res) => {
   const origin = req.headers.origin || '';
@@ -359,7 +363,7 @@ const server = createServer(async (req,res) => {
       const task=id && tasks.get(id);
       if (!task) return reply(res,200,{task:null});
       task.state='running';
-      return reply(res,200,{task:{id:task.id,command:task.command}});
+      return reply(res,200,{task:{id:task.id,command:task.command,operation:task.operation||'read'}});
     }
     if (path === '/device/result' && req.method === 'POST') {
       const data=await body(req);
@@ -371,7 +375,7 @@ const server = createServer(async (req,res) => {
       task.ok=data.ok;
       task.state='done';
       if (task.githubId) logGithub('RESULT',{id:task.githubId,task_id:task.id,
-        command:task.command,ok:task.ok,response:task.response.slice(0,2048)});
+        command:task.command,operation:task.operation||'read',ok:task.ok,response:task.response.slice(0,2048)});
       return reply(res,200,{ok:true});
     }
     if (path === '/agent/command' && req.method === 'POST') {
@@ -397,4 +401,4 @@ const server = createServer(async (req,res) => {
     return reply(res,400,{error:err instanceof SyntaxError ? 'Invalid JSON' : String(err.message)});
   }
 });
-server.listen(PORT,'0.0.0.0',()=>console.log('SMED OBD read-only bridge listening on '+PORT));
+server.listen(PORT,'0.0.0.0',()=>console.log('SMED OBD bridge listening on '+PORT));

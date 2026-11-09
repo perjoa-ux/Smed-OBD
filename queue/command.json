@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "id": "initial-disabled",
-  "command": "",
+  "id": "github-transport-smoke-20261109",
+  "command": "ATI",
   "expires_at": "2026-11-09T00:00:00Z",
-  "note": "GitHub read-only ECU command queue. This initial entry never runs."
+  "note": "Deliberately expired; no ECU command is to run. Checks GitHub to Render transport."
 }

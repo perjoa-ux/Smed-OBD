@@ -248,6 +248,7 @@ const GITHUB_QUEUE_URL='https://raw.githubusercontent.com/perjoa-ux/Smed-OBD/sme
 let githubLastJob = '';
 let githubBusy = false;
 let githubPollError = '';
+let githubEverFetched = false;
 function logGithub(kind, fields={}) {
   console.log('SMED_GITHUB_'+kind+' '+JSON.stringify(fields));
 }
@@ -263,6 +264,7 @@ async function pollGithubQueue() {
     const raw=await response.text();
     if(raw.length>2048) throw new Error('GitHub queue too large');
     const job=JSON.parse(raw);
+    if (!githubEverFetched) { githubEverFetched=true;logGithub('QUEUE_FETCHED',{id:String(job.id||'').slice(0,80)}); }
     if(typeof job.id!=='string'||typeof job.command!=='string'||typeof job.expires_at!=='string')
       throw new Error('Invalid GitHub queue schema');
     if(githubPollError){logGithub('QUEUE_RECOVERED');githubPollError='';}

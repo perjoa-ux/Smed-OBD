@@ -28,6 +28,8 @@ if (DEVICE_TOKEN.length < 24 || AGENT_TOKEN.length < 24 || DEVICE_TOKEN === AGEN
   process.exit(1);
 }
 let lastHello = 0;
+let lastDeviceVersion = null;
+let lastDeviceAuthFailure = 0;
 let queue = [];
 const tasks = new Map();
 
@@ -244,11 +246,18 @@ function mcpHandle(request) {
 // GitHub-connector command transport. The command branch does not trigger Render redeploy.
 // Only the repository owner can update queue/command.json; data in this branch is public,
 // so NEVER include credentials, VIN, private notes or ECU responses in the command file.
-const GITHUB_QUEUE_URL='https://raw.githubusercontent.com/perjoa-ux/Smed-OBD/smed-command-queue/queue/command.json';
+const GITHUB_QUEUE_URLS=[
+  'https://raw.githubusercontent.com/perjoa-ux/Smed-OBD/smed-command-queue/queue/command.json',
+  'https://raw.githubusercontent.com/perjoa-ux/Smed-OBD/refs/heads/smed-command-queue/queue/command.json'
+];
 let githubLastJob = '';
 let githubBusy = false;
 let githubPollError = '';
 let githubEverFetched = false;
+let githubSeenJob = '';
+let githubLatestJob = '';
+let githubLastFetched = 0;
+let githubOfflineNotified = '';
 function logGithub(kind, fields={}) {
   console.log('SMED_GITHUB_'+kind+' '+JSON.stringify(fields));
 }
@@ -256,14 +265,26 @@ async function pollGithubQueue() {
   if(githubBusy) return;
   githubBusy=true;
   try {
-    const response=await fetch(GITHUB_QUEUE_URL+'?cache='+Date.now(), {
-      headers:{'Accept':'application/json','Cache-Control':'no-cache','User-Agent':'SmedOBD-RenderBridge/0.17'},
-      signal:AbortSignal.timeout(6500)
-    });
-    if(!response.ok) throw new Error('GitHub queue HTTP '+response.status);
-    const raw=await response.text();
-    if(raw.length>2048) throw new Error('GitHub queue too large');
-    const job=JSON.parse(raw);
+    // Two distinct raw paths reduce the risk of stale CDN data; use the job
+    // with the latest expiration, not an expired cached entry.
+    const options=await Promise.all(GITHUB_QUEUE_URLS.map(async (url,index)=>{
+      const response=await fetch(url+'?smed_nonce='+Date.now()+'_'+index,{
+        headers:{'Accept':'application/json','Cache-Control':'no-store','User-Agent':'SmedOBD-RenderBridge/0.18'},
+        signal:AbortSignal.timeout(6500)});
+      if(!response.ok)throw Error('GitHub raw '+index+' HTTP '+response.status);
+      const raw=await response.text();
+      if(raw.length>2048)throw Error('GitHub queue too large');
+      return JSON.parse(raw);
+    }).map(p=>p.catch(()=>null)));
+    const available=options.filter(x=>x&&typeof x.id==='string');
+    if(!available.length)throw Error('Both GitHub raw queue endpoints unavailable');
+    const job=available.sort((a,b)=>(Date.parse(b.expires_at)||0)-(Date.parse(a.expires_at)||0))[0];
+    githubLastFetched=Date.now();
+    githubLatestJob=job.id;
+    if(job.id!==githubSeenJob){
+      githubSeenJob=job.id;
+      logGithub('JOB_SEEN',{id:job.id,device_online:Date.now()-lastHello<15000});
+    }
     if (!githubEverFetched) { githubEverFetched=true;logGithub('QUEUE_FETCHED',{id:String(job.id||'').slice(0,80)}); }
     if(typeof job.id!=='string'||typeof job.expires_at!=='string')
       throw new Error('Invalid GitHub queue schema');
@@ -285,7 +306,10 @@ async function pollGithubQueue() {
       logGithub('REJECTED',{id:job.id,reason:'not_on_command_allowlist'});
       return;
     }
-    if(Date.now()-lastHello>=15000) return;
+    if(Date.now()-lastHello>=15000) {
+      if(githubOfflineNotified!==job.id){githubOfflineNotified=job.id;logGithub('WAITING_FOR_BLUEFY',{id:job.id,reason:'device_bridge_offline'});}
+      return;
+    }
     expire();
     if([...tasks.values()].some(t=>t.state==='running'||t.state==='queued')) return;
     const task={id:randomUUID(),githubId:job.id,command,
@@ -345,17 +369,31 @@ const server = createServer(async (req,res) => {
     }
   }
   if (path === '/health' && req.method === 'GET')
-    return reply(res,200,{status:'ok', bridge:'smed-obd',device_online:Date.now()-lastHello<15000});
+    return reply(res,200,{status:'ok',bridge:'smed-obd',
+      device_online:Date.now()-lastHello<15000,
+      device_age_seconds:lastHello?Math.floor((Date.now()-lastHello)/1000):null,
+      device_version:lastDeviceVersion,
+      github_queue_id:githubLatestJob,
+      github_last_fetched_seconds:githubLastFetched?Math.floor((Date.now()-githubLastFetched)/1000):null,
+      github_error:githubPollError||null});
   const role = path.startsWith('/device/') ? 'device' : path.startsWith('/agent/') ? 'agent' : null;
   if (!role) return reply(res,404,{error:'Not found'});
-  if (!authorized(req,role)) return reply(res,401,{error:'Unauthorized'});
+  if (!authorized(req,role)) {
+    if(role==='device' && Date.now()-lastDeviceAuthFailure>30000){
+      lastDeviceAuthFailure=Date.now();
+      console.log('SMED_DEVICE_AUTH_REJECTED '+JSON.stringify({path,reason:'invalid_or_missing_device_token'}));
+    }
+    return reply(res,401,{error:'Unauthorized'});
+  }
   try {
     expire();
     if (path === '/device/hello' && req.method === 'POST') {
       const data = await body(req);
       if (data.device !== 'KONNWEI KDIAG') return reply(res,400,{error:'Unknown device'});
       lastHello=Date.now();
-      return reply(res,200,{ok:true,read_only:true});
+      lastDeviceVersion=typeof data.version==='string'?data.version.slice(0,20):'unknown';
+      console.log('SMED_DEVICE_CONNECTED '+JSON.stringify({version:lastDeviceVersion}));
+      return reply(res,200,{ok:true,read_only:false,operations:['read','clear_obd_dtc_with_local_confirmation']});
     }
     if (path === '/device/next' && req.method === 'GET') {
       lastHello=Date.now();
@@ -401,4 +439,4 @@ const server = createServer(async (req,res) => {
     return reply(res,400,{error:err instanceof SyntaxError ? 'Invalid JSON' : String(err.message)});
   }
 });
-server.listen(PORT,'0.0.0.0',()=>console.log('SMED OBD bridge listening on '+PORT));
+server.listen(PORT,'0.0.0.0',()=>console.log('SMED OBD v0.18 bridge listening on '+PORT));

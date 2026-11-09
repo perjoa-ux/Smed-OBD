@@ -484,7 +484,16 @@ $('catalogScanExtras').onclick=async()=>{
  const wasActive=bridgeActive;
  if(wasActive)stopBridge();
  scanRunning=true;scanStopped=false;
+ bridgeBase=base();bridgeKey=$('session').value.trim();
+ const id='scan-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,11);
+ const entries=[];
+ const upload=async data=>{
+   if(bridgeKey.length<24)return;
+   try{await api('/device/scan','POST',{id,...data})}
+   catch(e){log('BRO','Utvidet skanning: overføring til Render feilet: '+err(e))}
+ };
  let attempted=0,received=0,negative=0;
+ await upload({event:'started',total:extra.length,version:'0.21-extended'});
  try{
    for(const command of extra){
      if(scanStopped||!connected())break;
@@ -492,13 +501,22 @@ $('catalogScanExtras').onclick=async()=>{
      let response='',ok=false;
      try{response=await run(command);ok=true;received++}catch(e){response=err(e)}
      if(/(?:NO DATA|7F\\s*[0-9A-F]{2}\\s*[0-9A-F]{2})/i.test(response))negative++;
+     entries.push({time:new Date().toISOString(),command,ok,response});
+     try{localStorage.setItem('smed-obd-last-extended-scan',JSON.stringify({id,entries,total:extra.length,complete:false}))}
+     catch(e){log('BRO','Lokal lagring feilet: '+err(e))}
+     await upload({event:'block',command,ok,response:response.slice(0,3800)});
      $('catalogStatus').textContent='Utvidet standard-OBD: '+attempted+'/'+extra.length+
        '\nSvar: '+received+', avviste/NO DATA: '+negative+'\nSist: '+command+' '+response.slice(0,140);
      await sleep(80);
    }
  }finally{
    scanRunning=false;scanCommand=null;
-   $('catalogStatus').textContent+='\nUtvidet avlesning avsluttet. Se logg eller eksporter JSON-økt.';
+   const complete=!scanStopped&&connected()&&entries.length===extra.length;
+   try{localStorage.setItem('smed-obd-last-extended-scan',JSON.stringify({id,entries,total:extra.length,complete}))}
+   catch(e){log('BRO','Lokal lagring feilet: '+err(e))}
+   await upload({event:complete?'completed':'interrupted',total:extra.length});
+   $('catalogStatus').textContent+='\nUtvidet avlesning '+(complete?'fullført':'avbrutt')+
+     ', '+entries.length+' svar lagret på telefonen og forsøkt sendt til Render.';
    if(wasActive&&connected())await startBridge();
  }
 };

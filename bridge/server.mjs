@@ -420,7 +420,7 @@ const server = createServer(async (req,res) => {
       }
       if(data.event==='block'){
         const command=String(data.command||'').toUpperCase();
-        if(!/^(?:21[0-9A-F]{2}|0[137A][0-9A-F]{0,2})$/.test(command))
+        if(!ALLOWED.has(command) || command.startsWith('AT'))
           return reply(res,400,{error:'Invalid scan command'});
         if(typeof data.response!=='string'||data.response.length>4096)
           return reply(res,400,{error:'Invalid scan response'});

@@ -552,7 +552,7 @@ async function poll(){if(!bridgeActive)return;try{let r=await api('/device/next'
   if(!/(^|[^0-9A-F])44([^0-9A-F]|$)/i.test(answer))throw Error('Ingen verifisert 44-kvittering fra ECU: '+answer.slice(0,180));
   log('VARSEL','OBD modus 04 bekreftet av ECU; les feilkoder på nytt');
 }else{
-  if(!blocks.has(command)&&!/^(ATI|0100|0105|010C|03|2115|2117|ATE0|ATL0|ATSP6|ATSH7E0)$/.test(command))throw Error('Fjernkommando ikke tillatt');
+  if(!safeReadCommands.has(command))throw Error('Fjernkommando ikke i godkjent lesekatalog');
   answer=await run(command);
 }}catch(e){answer=err(e);ok=false}await api('/device/result','POST',{id:r.task.id,ok,response:answer})}}catch(e){log('BRO',err(e))}if(bridgeActive)bridgeTimer=setTimeout(poll,1500)}
 async function startBridge(){try{if(bridgeActive)return;if(scanRunning)throw Error('Kartlegging pågår');if(!connected())throw Error('Koble til KDIAG først');if(!canReady)await init();bridgeBase=base();bridgeKey=$('session').value.trim();if(bridgeKey.length<24)throw Error('Enhetskoden må være minst 24 tegn');await api('/device/hello','POST',{device:'KONNWEI KDIAG',version:'0.20'});bridgeActive=true;saveDeviceToken();$('bridgeStatus').textContent='Bro aktiv: KDIAG + Render';log('INFO','Fjernbro koblet til Render');poll()}catch(e){log('BRO',err(e));$('bridgeStatus').textContent=err(e)}}function stopBridge(){bridgeActive=false;clearTimeout(bridgeTimer);$('bridgeStatus').textContent='Bro ikke aktiv'}$('bridgeOn').onclick=startBridge;$('bridgeOff').onclick=stopBridge;

@@ -2,7 +2,7 @@ services:
   - type: web
     name: smed-obd
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: "npm --prefix bridge install"
     startCommand: "node bridge/server.mjs"
     healthCheckPath: /health

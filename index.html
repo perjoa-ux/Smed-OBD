@@ -1,4 +1,4 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smed OBD v0.22</title><style>:root{color-scheme:dark}body{font:16px system-ui;background:#081527;color:#edf5ff;padding:16px;margin:0}main{max-width:780px;margin:auto}section{background:#17283e;border:1px solid #37516e;border-radius:16px;padding:16px;margin:12px 0}button,input,select{font:inherit;padding:12px;border:1px solid #56789e;border-radius:9px;color:#fff;background:#203852;margin:3px;max-width:100%}button{cursor:pointer}button.primary{background:#1268ad}button.danger{background:#84393b}button:disabled{opacity:.45}input{box-sizing:border-box;width:100%}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:#081527;padding:12px;border-radius:8px;max-height:330px;overflow:auto}.muted{color:#b6c6da}#status{font-weight:700}.warn{color:#ffd59a}label{display:block;margin-top:10px}code{color:#a7ddff}</style></head><body><main><h1>🔧 Smed OBD v0.22</h1><p class="muted">KONNWEI KDIAG • Ekte ECU-data • Tillatelsesstyrt fjernbro</p><section><h2>1. Bluetooth / KDIAG</h2><p id="status">Frakoblet</p><button class="primary" id="connect">Koble til KONNWEI</button><button id="disconnect">Koble fra</button><button id="init">Initialiser CAN</button><p id="channels" class="muted">Forventet FFF0 / FFF1 (RX) / FFF2 (TX)</p></section><section><h2>2. Diagnostikk</h2><button data-cmd="ATI">Adapter-ID</button><button data-cmd="010C">Turtall</button><button data-cmd="0105">Kjølevæske</button><button data-cmd="0100">Støttede PID</button><button data-cmd="03">Les feilkoder</button><button data-cmd="2115">Mitsubishi 2115 rådata</button><button data-cmd="2117">4N14 oljedata (kandidat)</button><label for="block">4N14 referanseprofil (2016, 1860C97201)</label><select id="block"></select><button id="readBlock">Les valgt blokk</button><p>Verdiene er kandidater på 2011 ECU 1860B61405. Initialiser CAN før avlesning.</p><pre id="oil">Ingen profilavlesning</pre><label>Egendefinert lesekommando (AT/OBD)</label><input id="custom" placeholder="f.eks. 2115"><button id="customSend">Send etter kontroll</button><p class="muted">Lesedata er rådata inntil riktig Mitsubishi-formel er verifisert.</p><h3>Feilkodeoppslag</h3><label for="dtcInput">Skriv inn kode, f.eks. P252F</label><input id="dtcInput" maxlength="5"><button id="dtcLookup">Slå opp</button><pre id="dtcResult">Ingen kode valgt</pre>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smed OBD v0.23</title><style>:root{color-scheme:dark}body{font:16px system-ui;background:#081527;color:#edf5ff;padding:16px;margin:0}main{max-width:780px;margin:auto}section{background:#17283e;border:1px solid #37516e;border-radius:16px;padding:16px;margin:12px 0}button,input,select{font:inherit;padding:12px;border:1px solid #56789e;border-radius:9px;color:#fff;background:#203852;margin:3px;max-width:100%}button{cursor:pointer}button.primary{background:#1268ad}button.danger{background:#84393b}button:disabled{opacity:.45}input{box-sizing:border-box;width:100%}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:#081527;padding:12px;border-radius:8px;max-height:330px;overflow:auto}.muted{color:#b6c6da}#status{font-weight:700}.warn{color:#ffd59a}label{display:block;margin-top:10px}code{color:#a7ddff}</style></head><body><main><h1>🔧 Smed OBD v0.23</h1><p class="muted">KONNWEI KDIAG • Ekte ECU-data • Tillatelsesstyrt fjernbro</p><section><h2>1. Bluetooth / KDIAG</h2><p id="status">Frakoblet</p><button class="primary" id="connect">Koble til KONNWEI</button><button id="disconnect">Koble fra</button><button id="init">Initialiser CAN</button><p id="channels" class="muted">Forventet FFF0 / FFF1 (RX) / FFF2 (TX)</p><p id="backgroundStatus" class="muted">Bakgrunn: holder eksisterende tilkobling; gjenoppretter automatisk når Bluefy åpnes igjen.</p></section><section><h2>2. Diagnostikk</h2><button data-cmd="ATI">Adapter-ID</button><button data-cmd="010C">Turtall</button><button data-cmd="0105">Kjølevæske</button><button data-cmd="0100">Støttede PID</button><button data-cmd="03">Les feilkoder</button><button data-cmd="2115">Mitsubishi 2115 rådata</button><button data-cmd="2117">4N14 oljedata (kandidat)</button><label for="block">4N14 referanseprofil (2016, 1860C97201)</label><select id="block"></select><button id="readBlock">Les valgt blokk</button><p>Verdiene er kandidater på 2011 ECU 1860B61405. Initialiser CAN før avlesning.</p><pre id="oil">Ingen profilavlesning</pre><label>Egendefinert lesekommando (AT/OBD)</label><input id="custom" placeholder="f.eks. 2115"><button id="customSend">Send etter kontroll</button><p class="muted">Lesedata er rådata inntil riktig Mitsubishi-formel er verifisert.</p><h3>Feilkodeoppslag</h3><label for="dtcInput">Skriv inn kode, f.eks. P252F</label><input id="dtcInput" maxlength="5"><button id="dtcLookup">Slå opp</button><pre id="dtcResult">Ingen kode valgt</pre>
 <p><a href="4n14-egr-dpf.html" style="color:#a7ddff">Illustrert 4N14-guide for EGR og DPF</a> · Referanse fra en annen CW1W.</p><h3>Outlander – siste målinger</h3><p>Verdier tolket med 2016-referanseprofilen. Tidspunkt viser når verdien sist ble lest.</p><ul id="dashboard"></ul><h3>Siste svar</h3><pre id="answer">–</pre><h3>Sesjonsmålinger</h3><pre id="measurements">Ingen</pre></section><section><h2>2b. ECU-kommandobibliotek</h2>
 <p class="muted">75 produsentspesifikke 4N14-blokker (273 profilerte målepunkter), standardiserte OBD-lesefunksjoner og kildebelagte MUT-III-referanser. Alle er merket med kilde og bekreftelsesstatus.</p>
 <label for="catalogGroup">Kommandotype</label><select id="catalogGroup"><option value="all">Alle kjørbare lesekommandoer</option><option value="live">Svar fra denne ECU 09.11</option><option value="obd">OBD-standard lesing</option><option value="profile">4N14 produsentdata</option></select>
@@ -31,7 +31,7 @@ Adressen er foreløpig ikke knyttet til en måleverdi på denne Outlanderen.</p>
 <label for="traceFile">Åpne en tidligere JSON-økt uten å sende kommandoer</label>
 <input id="traceFile" type="file" accept=".json,application/json">
 <pre id="scanStatus">Ingen kartlegging</pre><pre id="replay"></pre></section></main><script>
-(()=>{'use strict';const $=x=>document.getElementById(x), loglines=[], results=[];let dev=null,tx=null,rx=null,buffer='',pending=null,bridgeActive=false,bridgeTimer=null,bridgeBase='',bridgeKey='',canReady=false,connecting=false;const svc='0000fff0-0000-1000-8000-00805f9b34fb';
+(()=>{'use strict';const $=x=>document.getElementById(x), loglines=[], results=[];let dev=null,tx=null,rx=null,buffer='',pending=null,bridgeActive=false,bridgeTimer=null,bridgeBase='',bridgeKey='',canReady=false,connecting=false,manualDisconnect=false,resuming=false;const svc='0000fff0-0000-1000-8000-00805f9b34fb';
 function log(level,s){let line=`${new Date().toISOString()} [${level}] ${s}`;loglines.push(line);$('log').textContent=loglines.join('\n');console.log(line)}function err(e){return `${e?.name||'Error'}: ${e?.message||String(e)}`}function stat(s){$('status').textContent=s}function connected(){return !!(dev?.gatt?.connected&&tx&&rx)}
 function receive(e){let v=e.target.value;let s=new TextDecoder().decode(new Uint8Array(v.buffer,v.byteOffset,v.byteLength));log('RX',JSON.stringify(s));buffer+=s;$('answer').textContent=buffer;if(pending&&buffer.includes('>')){const p=pending;pending=null;clearTimeout(p.timeout);const result=buffer.trim();results.unshift({time:new Date().toISOString(),command:p.command,response:result});results.length=Math.min(results.length,25);$('measurements').textContent=results.map(x=>`${x.time} ${x.command}: ${x.response}`).join('\n');if(blocks.has(p.command)) showBlock(p.command,result);if(['03','07','0A'].includes(p.command)){
   const codes = storedCodes(result, {'03':'43','07':'47','0A':'4A'}[p.command]);
@@ -369,7 +369,8 @@ async function connect(){
   try{
     stat('Velger KONNWEI…');
     dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'KONNWEI'}],optionalServices:[svc]});
-    dev.addEventListener('gattserverdisconnected',()=>{scanStopped=true;tx=rx=null;canReady=false;stat('BLE frakoblet');stopBridge()});
+    manualDisconnect=false;
+    dev.addEventListener('gattserverdisconnected',onKdiagDisconnected);
     const g=await dev.gatt.connect(),service=await g.getPrimaryService(svc);
     rx=await service.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
     tx=await service.getCharacteristic('0000fff2-0000-1000-8000-00805f9b34fb');
@@ -394,6 +395,57 @@ async function connect(){
     log('FEIL','Automatisk oppstart: '+err(e));
   }finally{connecting=false}
 }
+
+function onKdiagDisconnected(){
+  scanStopped=true;tx=rx=null;canReady=false;
+  stopBridge();
+  stat('BLE frakoblet – automatisk gjenoppretting når Bluefy er aktiv');
+  $('backgroundStatus').textContent='Bluetooth-forbindelsen ble avbrutt. Gjenoppretter når Bluefy er i forgrunnen.';
+  log('BLE','KDIAG frakoblet; lagret enhet beholdes');
+  if(!manualDisconnect && !document.hidden) void resumeKdiag();
+}
+async function resumeKdiag(){
+  if(resuming || connecting || manualDisconnect || !dev || document.hidden)return;
+  resuming=true;
+  try{
+    if(!dev.gatt.connected){
+      stat('Gjenoppretter tidligere KONNWEI-tilkobling…');
+      await dev.gatt.connect();
+      const service=await dev.gatt.getPrimaryService(svc);
+      rx=await service.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
+      tx=await service.getCharacteristic('0000fff2-0000-1000-8000-00805f9b34fb');
+      await rx.startNotifications();
+      rx.removeEventListener('characteristicvaluechanged',receive);
+      rx.addEventListener('characteristicvaluechanged',receive);
+      canReady=false;
+      log('BLE','Eksisterende KDIAG-enhet gjenopprettet uten ny enhetsvelger');
+      await init();
+      if(!bridgeActive && $('session').value.trim().length>=24) await startBridge();
+      stat('KDIAG gjenopprettet – bro aktiv');
+      $('backgroundStatus').textContent='Gjenopprettet etter appbytte. Bluetooth-forbindelsen er aktiv.';
+      // Resume uses the existing session; full scan is run on a new user-initiated connection.
+    } else if(connected() && !scanRunning && !bridgeActive && $('session').value.trim().length>=24) {
+      if(!canReady)await init();
+      await startBridge();
+      $('backgroundStatus').textContent='KDIAG fortsatt tilkoblet. Render-broen gjenopptatt.';
+    }
+  }catch(e){
+    log('BLE','Automatisk gjenoppretting: '+err(e));
+    $('backgroundStatus').textContent='Gjenoppretting mislyktes: '+err(e)+' – trykk Koble til KONNWEI.';
+  }finally{resuming=false}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    $('backgroundStatus').textContent='Bluefy i bakgrunnen. Ingen frivillig BLE-frakobling; iOS kan pause nettsiden.';
+    log('BLE','Bluefy i bakgrunnen – lar KDIAG-forbindelsen stå');
+  }else{
+    $('backgroundStatus').textContent='Bluefy tilbake i forgrunnen; sjekker KDIAG og broen.';
+    void resumeKdiag();
+  }
+});
+window.addEventListener('pageshow',()=>{if(!document.hidden)void resumeKdiag()});
+window.addEventListener('focus',()=>{if(!document.hidden)void resumeKdiag()});
+
 async function send(cmd){cmd=String(cmd).trim().toUpperCase();if(!/^[A-Z0-9]+$/.test(cmd)||cmd.length>16)throw Error('Ugyldig kommandoformat');if(!connected())throw Error('Koble til KDIAG først');if(scanRunning && cmd!==scanCommand)throw Error('Kartlegging pågår');if(pending)throw Error('Forrige kommando er ikke ferdig');buffer='';$('answer').textContent='';return await new Promise(async(resolve,reject)=>{let timeout=setTimeout(()=>{pending=null;recordTrace(cmd,buffer,'timeout');reject(Error('Timeout etter 5 sekunder'))},5000);pending={resolve,reject,timeout,command:cmd};try{let data=new TextEncoder().encode(cmd+'\r');await tx.writeValueWithoutResponse(data);log('TX',cmd)}catch(e){clearTimeout(timeout);pending=null;reject(e)}})}
 async function run(cmd){try{return await send(cmd)}catch(e){log('FEIL',err(e));throw e}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function init(){if(scanRunning)throw Error('Kartlegging pågår');if(!connected())throw Error('Ingen adapter');canReady=false;for(const c of ['ATE0','ATL0','ATSP6','ATSH7E0']){const reply=await run(c);if(/(^|[\r\n])\s*(ERROR|\?|UNABLE TO CONNECT)\s*([\r\n]|>)/i.test(reply))throw Error('CAN-oppsett avvist ved '+c);await sleep(100)}canReady=true;log('INFO','CAN initialisert automatisk med protokoll 6 og header 7E0')}
@@ -517,7 +569,7 @@ $('catalogScanExtras').onclick=async()=>{
 };
 refreshCatalog();
 async function read(cmd){try{cmd=String(cmd).trim().toUpperCase();if(scanRunning)throw Error('Kartlegging pågår');if(!safeReadCommands.has(cmd))throw Error('Ikke i verifisert/standard lesekatalog – utestede skrivesekvenser er sperret');if(!canReady)await init();await run(cmd)}catch(e){log('FEIL',err(e))}}
-$('connect').onclick=connect;$('disconnect').onclick=()=>{stopBridge();dev?.gatt?.disconnect();tx=rx=null;canReady=false;stat('Frakoblet')};$('init').onclick=()=>init().catch(e=>log('FEIL','CAN-initialisering: '+err(e)));document.querySelectorAll('[data-cmd]').forEach(el=>el.onclick=()=>read(el.dataset.cmd));$('customSend').onclick=()=>read($('custom').value.trim().toUpperCase());$('clearCodes').onclick=async()=>{if(!connected())return alert('Koble til KDIAG først.');if(!confirm('Slette standard OBD-feilkoder med modus 04? Dette kan fjerne nyttige feildata og nullstille readiness.'))return;if(!confirm('Bekreft én gang til: SEND 04 TIL ECU NÅ?'))return;try{await run('04');log('VARSEL','Modus 04 sendt etter lokal dobbel bekreftelse')}catch(e){log('FEIL',err(e))}};
+$('connect').onclick=connect;$('disconnect').onclick=()=>{manualDisconnect=true;stopBridge();dev?.gatt?.disconnect();tx=rx=null;canReady=false;stat('Frakoblet')};$('init').onclick=()=>init().catch(e=>log('FEIL','CAN-initialisering: '+err(e)));document.querySelectorAll('[data-cmd]').forEach(el=>el.onclick=()=>read(el.dataset.cmd));$('customSend').onclick=()=>read($('custom').value.trim().toUpperCase());$('clearCodes').onclick=async()=>{if(!connected())return alert('Koble til KDIAG først.');if(!confirm('Slette standard OBD-feilkoder med modus 04? Dette kan fjerne nyttige feildata og nullstille readiness.'))return;if(!confirm('Bekreft én gang til: SEND 04 TIL ECU NÅ?'))return;try{await run('04');log('VARSEL','Modus 04 sendt etter lokal dobbel bekreftelse')}catch(e){log('FEIL',err(e))}};
 const DEFAULT_BRIDGE='https://smed-obd-i2kp.onrender.com';
 $('bridge').value=DEFAULT_BRIDGE;
 // The device credential belongs to this Bluefy installation, never to public GitHub.
@@ -550,6 +602,6 @@ async function poll(){if(!bridgeActive)return;try{let r=await api('/device/next'
   if(!safeReadCommands.has(command))throw Error('Fjernkommando ikke i godkjent lesekatalog');
   answer=await run(command);
 }}catch(e){answer=err(e);ok=false}await api('/device/result','POST',{id:r.task.id,ok,response:answer})}}catch(e){log('BRO',err(e))}if(bridgeActive)bridgeTimer=setTimeout(poll,1500)}
-async function startBridge(){try{if(bridgeActive)return;if(scanRunning)throw Error('Kartlegging pågår');if(!connected())throw Error('Koble til KDIAG først');if(!canReady)await init();bridgeBase=base();bridgeKey=$('session').value.trim();if(bridgeKey.length<24)throw Error('Enhetskoden må være minst 24 tegn');await api('/device/hello','POST',{device:'KONNWEI KDIAG',version:'0.22'});bridgeActive=true;saveDeviceToken();$('bridgeStatus').textContent='Bro aktiv: KDIAG + Render';log('INFO','Fjernbro koblet til Render');poll()}catch(e){log('BRO',err(e));$('bridgeStatus').textContent=err(e)}}function stopBridge(){bridgeActive=false;clearTimeout(bridgeTimer);$('bridgeStatus').textContent='Bro ikke aktiv'}$('bridgeOn').onclick=startBridge;$('bridgeOff').onclick=stopBridge;
-$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(loglines.join('\n'))}catch(e){log('FEIL',err(e))}};$('export').onclick=()=>{const url=URL.createObjectURL(new Blob([loglines.join('\n')],{type:'text/plain'}));let a=document.createElement('a');a.href=url;a.download='SmedOBD-v012-logg.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};window.addEventListener('unhandledrejection',e=>log('FEIL','Promise: '+err(e.reason)));log('INFO','v0.22 startet – totalskann av hele lesekatalogen ved hver Bluetooth-tilkobling');
+async function startBridge(){try{if(bridgeActive)return;if(scanRunning)throw Error('Kartlegging pågår');if(!connected())throw Error('Koble til KDIAG først');if(!canReady)await init();bridgeBase=base();bridgeKey=$('session').value.trim();if(bridgeKey.length<24)throw Error('Enhetskoden må være minst 24 tegn');await api('/device/hello','POST',{device:'KONNWEI KDIAG',version:'0.23'});bridgeActive=true;saveDeviceToken();$('bridgeStatus').textContent='Bro aktiv: KDIAG + Render';log('INFO','Fjernbro koblet til Render');poll()}catch(e){log('BRO',err(e));$('bridgeStatus').textContent=err(e)}}function stopBridge(){bridgeActive=false;clearTimeout(bridgeTimer);$('bridgeStatus').textContent='Bro ikke aktiv'}$('bridgeOn').onclick=startBridge;$('bridgeOff').onclick=stopBridge;
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(loglines.join('\n'))}catch(e){log('FEIL',err(e))}};$('export').onclick=()=>{const url=URL.createObjectURL(new Blob([loglines.join('\n')],{type:'text/plain'}));let a=document.createElement('a');a.href=url;a.download='SmedOBD-v012-logg.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};window.addEventListener('unhandledrejection',e=>log('FEIL','Promise: '+err(e.reason)));log('INFO','v0.23 startet – gjenoppretter KDIAG ved retur fra andre iPhone-apper');
 })();</script></body></html>

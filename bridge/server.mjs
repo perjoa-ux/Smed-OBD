@@ -34,6 +34,8 @@ if (DEVICE_TOKEN.length < 24 || AGENT_TOKEN.length < 24 || DEVICE_TOKEN === AGEN
 let lastHello = 0;
 let lastDeviceVersion = null;
 let lastDeviceAuthFailure = 0;
+let lastDeviceEvent = null;
+const recentDeviceEvents = [];
 const scanSessions = new Map();
 let latestScanId = null;
 let queue = [];
@@ -379,6 +381,8 @@ const server = createServer(async (req,res) => {
       device_online:Date.now()-lastHello<15000,
       device_age_seconds:lastHello?Math.floor((Date.now()-lastHello)/1000):null,
       device_version:lastDeviceVersion,
+      device_event:lastDeviceEvent?.event||null,
+      device_event_at:lastDeviceEvent?.at||null,
       github_queue_id:githubLatestJob,
       github_last_fetched_seconds:githubLastFetched?Math.floor((Date.now()-githubLastFetched)/1000):null,
       github_error:githubPollError||null,
@@ -396,6 +400,30 @@ const server = createServer(async (req,res) => {
   }
   try {
     expire();
+    if (path === '/device/event' && req.method === 'POST') {
+      const data = await body(req);
+      if(!['connected','scan_started','reading','scan_completed','scan_interrupted','disconnected'].includes(data.event))
+        return reply(res,400,{error:'Invalid device event'});
+      const command=typeof data.command==='string'?data.command.toUpperCase():'';
+      if(command && !ALLOWED.has(command))return reply(res,400,{error:'Invalid read command'});
+      const event={event:data.event,at:new Date().toISOString(),
+        scan_id:typeof data.scan_id==='string'?data.scan_id.slice(0,80):null,
+        command:command||null,
+        progress:Number.isInteger(data.progress)?Math.max(0,Math.min(250,data.progress)):null,
+        total:Number.isInteger(data.total)?Math.max(0,Math.min(250,data.total)):null};
+      lastDeviceEvent=event;
+      recentDeviceEvents.unshift(event);
+      if(recentDeviceEvents.length>25)recentDeviceEvents.length=25;
+      if(data.event!=='disconnected')lastHello=Date.now();
+      console.log('SMED_DEVICE_EVENT '+JSON.stringify(event));
+      return reply(res,200,{ok:true,received:event.at});
+    }
+    if (path === '/agent/device-status' && req.method === 'GET') {
+      return reply(res,200,{device_online:Date.now()-lastHello<15000,
+        last_event:lastDeviceEvent,events:recentDeviceEvents.slice(0,25),
+        last_scan_id:latestScanId,
+        last_scan:latestScanId?scanSessions.get(latestScanId)||null:null});
+    }
     if (path === '/device/hello' && req.method === 'POST') {
       const data = await body(req);
       if (data.device !== 'KONNWEI KDIAG') return reply(res,400,{error:'Unknown device'});

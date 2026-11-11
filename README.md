@@ -4,7 +4,7 @@
 
 Mål: ekte diagnostikk for Mitsubishi Outlander 2011 CW1W 2.2 DI-D 4N14 med KONNWEI KDIAG, Bluetooth fra iPhone i Bluefy, og godkjente lesekommandoer via Render-bro. Vibecode kreves ikke.
 
-## Versjon v0.24
+## Versjon v0.25
 
 - `index.html`: Bluefy-app. Web Bluetooth mot KONNWEI (FFF0 / FFF1 / FFF2), ELM-CAN init, totalskann hver ny manuell BLE-tilkobling, 123 lesekommandoer og lokal logg.
 - `ECU-KOMMANDOKATALOG.md`: 4N14-katalog, datadefinisjoner og kildehenvisninger.
@@ -12,7 +12,7 @@ Mål: ekte diagnostikk for Mitsubishi Outlander 2011 CW1W 2.2 DI-D 4N14 med KONN
 - `4n14-egr-dpf.html`: Illustrert referanse for service-/DPF-relaterte komponenter.
 - `README.md`: Denne prosjektstatusen.
 
-## v0.24 – ny funksjonalitet
+## v0.25 – ny funksjonalitet
 
 Appen lagrer siste totalskann lokalt og tilbyr:
 - **Last ned siste totalskann (JSON)** med alle råsvar.
@@ -28,7 +28,7 @@ En nettside i Bluefy kan bli suspendert når en annen iOS-app blir aktiv. JavaSc
 ## Teststatus
 
 - Verifisert tidligere på fysisk bil med v0.22: automatisk 123/123 gjennomgått og overført til Render (10. november 2026). «123/123» betyr gjennomgåtte kommandoer, ikke 123 støttede målepunkter.
-- v0.24: JavaScript parsingskontroll ved GitHub-oppdatering **bestått**. Nye eksportknapper og rapportlogikk er **ikke testet fysisk på Bluefy ennå**.
+- v0.25: JavaScript parsingskontroll **bestått**; rapportens regulæruttrykk og linjeskift korrigert. Syntetisk test: rått `2117`-svar `61 17 FF 64 64 00 00` dekodes til 1550 cc. Fysisk test gjenstår. Nye eksportknapper og rapportlogikk er **ikke testet fysisk på Bluefy ennå**.
 - Produsentspesifikk Mitsubishi Engine Oil Exchange Service/P252F reset er fortsatt **ikke bekreftet**. Standard OBD Mode 04 (sletting) krever dobbel lokal godkjenning og er ikke lik oljeinitialisering.
 
 ## Videre utvikling

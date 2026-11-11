@@ -1,28 +1,36 @@
-# Smed-OBD
-
-Diagnoseapp for Mitsubishi Outlander 2011 CW1W 4N14, via KONNWEI KDIAG / Bluefy og Render HTTPS.
-
+# Smed-OBD – Bluefy (gratis)
+ 
 **App:** https://smed-obd-i2kp.onrender.com
 
-## Gjeldende versjon og innhold
+Mål: ekte diagnostikk for Mitsubishi Outlander 2011 CW1W 2.2 DI-D 4N14 med KONNWEI KDIAG, Bluetooth fra iPhone i Bluefy, og godkjente lesekommandoer via Render-bro. Vibecode kreves ikke.
 
-- `index.html` – v0.21. BLE → CAN 7E0 → første automatisk ECU-skanning → Render-serverbro.
-- `ECU-KOMMANDOKATALOG.md` – samlet katalog med dokumenterte kilder og status per kommando.
-- `bridge/server.mjs` – HTTPS-server for autentisert diagnose, lagring av skannelogger og GitHub-kommandobro.
-- `bridge/README.md` – teknisk oppsett / tilgang og rutiner.
-- `4n14-egr-dpf.html` – EGR/DPF-referanseside.
+## Versjon v0.24
 
-Kommandokatalog: 75 produsentspesifikke 4N14-datablokker med 273 navngitte felt i kildeprofilen; 48 standard OBD-lesekommandoer; totalt 123 unike katalogoppføringer. Kommandoene er ikke alle bekreftet støttet på denne ECU-en.
+- `index.html`: Bluefy-app. Web Bluetooth mot KONNWEI (FFF0 / FFF1 / FFF2), ELM-CAN init, totalskann hver ny manuell BLE-tilkobling, 123 lesekommandoer og lokal logg.
+- `ECU-KOMMANDOKATALOG.md`: 4N14-katalog, datadefinisjoner og kildehenvisninger.
+- `bridge/server.mjs`: HTTPS/Render-bro med separat enhetstoken og agenttoken, lesekø, skanneventlogg og begrensede tilganger.
+- `4n14-egr-dpf.html`: Illustrert referanse for service-/DPF-relaterte komponenter.
+- `README.md`: Denne prosjektstatusen.
 
-### Dokumentert test
+## v0.24 – ny funksjonalitet
 
-2026-11-09 kjørte Bluefy v0.20 en faktisk skanning av 81 kommandoer. Render logget `SMED_SCAN_FINISHED` med `completed`, 81/81 overført, samt råsvar for blant annet `2117` / beregnet oljeøkning 1550 cc. Fire `21xx`-blokker svarte `7F 21 12`; `0A` svarte `NO DATA`. Resultat finnes i Render-loggene, og lokal kopi i Bluefy.
+Appen lagrer siste totalskann lokalt og tilbyr:
+- **Last ned siste totalskann (JSON)** med alle råsvar.
+- **Last ned diagnoseoppsummering (TXT)** med olje (2117), DPF (2110/2111/2112), generelle DTC-koder, NO DATA og tidsavbrudd.
+- **Tidligere skanninger** med tidspunkt, fullføringsgrad og antall opplastinger.
 
-### Diagnose og sikkerhet
+Dataene overføres fortsatt til Render under totalskann. Rådata lagres på telefonen. Gjeldende spesialreset for P252F er ikke bekreftet eller aktivert.
 
-- Lesekommandoer er allowlistet både i Bluefy og Render.
-- Standard OBD-modus `04` er egen skriveoperasjon som krever dobbel godkjenning på telefonen. Den er **ikke** en oljereset.
-- `30540700` (MUT-III «Engine oil exchange service»), `1092`, `1081`, `3E02`, `2380878C02` og uavklarte DPF-rutiner er kildebelagte **referanser, ikke aktive ECU-handlinger**.
-- Ikke legg `SMED_DEVICE_TOKEN` eller `SMED_AGENT_TOKEN` i GitHub; nøklene hører hjemme i Render Environment og privat på telefonen.
+## Hovedbegrensning i Bluefy / iOS
 
-Appen har ikke fullstendig MUT-III-funksjonsdekning, programmerings-/kodefunksjoner eller verifisert P252F-oljereset. Det er ikke nødvendig å koble til bilen for å endre og publisere appkoden.
+En nettside i Bluefy kan bli suspendert når en annen iOS-app blir aktiv. JavaScript har ikke rett til å kreve kontinuerlig Bluetooth- og HTTPS-aktivitet i bakgrunnen. Appen forsøker å beholde eller gjenoppta BLE-tilkoblingen når Bluefy kommer i forgrunnen, men dette er **ikke garantert**. For langvarig live-diagnose må Bluefy normalt forbli åpen og aktiv. Dette er ikke en betalingsmur og kan ikke låses opp med en omvei i HTML.
+
+## Teststatus
+
+- Verifisert tidligere på fysisk bil med v0.22: automatisk 123/123 gjennomgått og overført til Render (10. november 2026). «123/123» betyr gjennomgåtte kommandoer, ikke 123 støttede målepunkter.
+- v0.24: JavaScript parsingskontroll ved GitHub-oppdatering **bestått**. Nye eksportknapper og rapportlogikk er **ikke testet fysisk på Bluefy ennå**.
+- Produsentspesifikk Mitsubishi Engine Oil Exchange Service/P252F reset er fortsatt **ikke bekreftet**. Standard OBD Mode 04 (sletting) krever dobbel lokal godkjenning og er ikke lik oljeinitialisering.
+
+## Videre utvikling
+
+Neste prioritet: verifisere rapporteksport og brostatus på fysisk iPhone; deretter undersøke eksakt og sikker MUT-III oljeinitialisering på ECU HW 1860B614 / SW 1860B61405. Ingen ukjente skriverutiner sendes automatisk.

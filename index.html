@@ -607,7 +607,7 @@ $('mutOilReset').onclick=async()=>{
   const save=(status,extra={})=>{
     const record={at:new Date().toISOString(),status,...extra};
     try{localStorage.setItem(mutOilLock,JSON.stringify(record))}catch(e){
-      log('MUT43','Historikk kunne ikke lagres: '+err(e));
+      throw Error('Sikkerhetslås kunne ikke lagres – No.43 kan ikke sendes: '+err(e));
     }
   };
   try{

@@ -1,4 +1,4 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smed OBD v0.26</title><style>:root{color-scheme:dark}body{font:16px system-ui;background:#081527;color:#edf5ff;padding:16px;margin:0}main{max-width:780px;margin:auto}section{background:#17283e;border:1px solid #37516e;border-radius:16px;padding:16px;margin:12px 0}button,input,select{font:inherit;padding:12px;border:1px solid #56789e;border-radius:9px;color:#fff;background:#203852;margin:3px;max-width:100%}button{cursor:pointer}button.primary{background:#1268ad}button.danger{background:#84393b}button:disabled{opacity:.45}input{box-sizing:border-box;width:100%}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:#081527;padding:12px;border-radius:8px;max-height:330px;overflow:auto}.muted{color:#b6c6da}#status{font-weight:700}.warn{color:#ffd59a}label{display:block;margin-top:10px}code{color:#a7ddff}</style></head><body><main><h1>🔧 Smed OBD v0.26</h1><p class="muted">KONNWEI KDIAG • Ekte ECU-data • Tillatelsesstyrt fjernbro</p><section><h2>1. Bluetooth / KDIAG</h2><p id="status">Frakoblet</p><button class="primary" id="connect">Koble til KONNWEI</button><button id="disconnect">Koble fra</button><button id="init">Initialiser CAN</button><p id="channels" class="muted">Forventet FFF0 / FFF1 (RX) / FFF2 (TX)</p><p id="backgroundStatus" class="muted">Bluefy må være aktiv for kontinuerlig ECU-kommunikasjon. Ved retur forsøker appen å gjenopprette forbindelsen.</p><p class="muted">Ingen Vibecode-avhengighet · all ECU-lesing foregår lokalt på iPhone i Bluefy.</p></section><section><h2>2. Diagnostikk</h2><button data-cmd="ATI">Adapter-ID</button><button data-cmd="010C">Turtall</button><button data-cmd="0105">Kjølevæske</button><button data-cmd="0100">Støttede PID</button><button data-cmd="03">Les feilkoder</button><button data-cmd="2115">Mitsubishi 2115 rådata</button><button data-cmd="2117">4N14 oljedata (kandidat)</button><label for="block">4N14 referanseprofil (2016, 1860C97201)</label><select id="block"></select><button id="readBlock">Les valgt blokk</button><p>Verdiene er kandidater på 2011 ECU 1860B61405. Initialiser CAN før avlesning.</p><pre id="oil">Ingen profilavlesning</pre><label>Egendefinert lesekommando (AT/OBD)</label><input id="custom" placeholder="f.eks. 2115"><button id="customSend">Send etter kontroll</button><p class="muted">Lesedata er rådata inntil riktig Mitsubishi-formel er verifisert.</p><h3>Feilkodeoppslag</h3><label for="dtcInput">Skriv inn kode, f.eks. P252F</label><input id="dtcInput" maxlength="5"><button id="dtcLookup">Slå opp</button><pre id="dtcResult">Ingen kode valgt</pre>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smed OBD v0.27</title><style>:root{color-scheme:dark}body{font:16px system-ui;background:#081527;color:#edf5ff;padding:16px;margin:0}main{max-width:780px;margin:auto}section{background:#17283e;border:1px solid #37516e;border-radius:16px;padding:16px;margin:12px 0}button,input,select{font:inherit;padding:12px;border:1px solid #56789e;border-radius:9px;color:#fff;background:#203852;margin:3px;max-width:100%}button{cursor:pointer}button.primary{background:#1268ad}button.danger{background:#84393b}button:disabled{opacity:.45}input{box-sizing:border-box;width:100%}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:#081527;padding:12px;border-radius:8px;max-height:330px;overflow:auto}.muted{color:#b6c6da}#status{font-weight:700}.warn{color:#ffd59a}label{display:block;margin-top:10px}code{color:#a7ddff}</style></head><body><main><h1>🔧 Smed OBD v0.27</h1><p class="muted">KONNWEI KDIAG • Ekte ECU-data • Tillatelsesstyrt fjernbro</p><section><h2>1. Bluetooth / KDIAG</h2><p id="status">Frakoblet</p><button class="primary" id="connect">Koble til KONNWEI</button><button id="disconnect">Koble fra</button><button id="init">Initialiser CAN</button><p id="channels" class="muted">Forventet FFF0 / FFF1 (RX) / FFF2 (TX)</p><p id="notifyStatus" class="muted">Varsling til Smed: sender forbindelses- og lesestatus til Render når enhetstoken er registrert.</p><p id="backgroundStatus" class="muted">Bluefy må være aktiv for kontinuerlig ECU-kommunikasjon. Ved retur forsøker appen å gjenopprette forbindelsen.</p><p class="muted">Ingen Vibecode-avhengighet · all ECU-lesing foregår lokalt på iPhone i Bluefy.</p></section><section><h2>2. Diagnostikk</h2><button data-cmd="ATI">Adapter-ID</button><button data-cmd="010C">Turtall</button><button data-cmd="0105">Kjølevæske</button><button data-cmd="0100">Støttede PID</button><button data-cmd="03">Les feilkoder</button><button data-cmd="2115">Mitsubishi 2115 rådata</button><button data-cmd="2117">4N14 oljedata (kandidat)</button><label for="block">4N14 referanseprofil (2016, 1860C97201)</label><select id="block"></select><button id="readBlock">Les valgt blokk</button><p>Verdiene er kandidater på 2011 ECU 1860B61405. Initialiser CAN før avlesning.</p><pre id="oil">Ingen profilavlesning</pre><label>Egendefinert lesekommando (AT/OBD)</label><input id="custom" placeholder="f.eks. 2115"><button id="customSend">Send etter kontroll</button><p class="muted">Lesedata er rådata inntil riktig Mitsubishi-formel er verifisert.</p><h3>Feilkodeoppslag</h3><label for="dtcInput">Skriv inn kode, f.eks. P252F</label><input id="dtcInput" maxlength="5"><button id="dtcLookup">Slå opp</button><pre id="dtcResult">Ingen kode valgt</pre>
 <p><a href="4n14-egr-dpf.html" style="color:#a7ddff">Illustrert 4N14-guide for EGR og DPF</a> · Referanse fra en annen CW1W.</p><h3>Outlander – siste målinger</h3><p>Verdier tolket med 2016-referanseprofilen. Tidspunkt viser når verdien sist ble lest.</p><ul id="dashboard"></ul><h3>Siste svar</h3><pre id="answer">–</pre><h3>Sesjonsmålinger</h3><pre id="measurements">Ingen</pre></section><section><h2>2b. ECU-kommandobibliotek</h2>
 <p class="muted">75 produsentspesifikke 4N14-blokker (273 profilerte målepunkter), standardiserte OBD-lesefunksjoner og kildebelagte MUT-III-referanser. Alle er merket med kilde og bekreftelsesstatus.</p>
 <label for="catalogGroup">Kommandotype</label><select id="catalogGroup"><option value="all">Alle kjørbare lesekommandoer</option><option value="live">Svar fra denne ECU 09.11</option><option value="obd">OBD-standard lesing</option><option value="profile">4N14 produsentdata</option></select>
@@ -328,6 +328,7 @@ $('p252fCheck').onclick=async()=>{
   $('p252fCheck').disabled=true;
   const started=new Date().toISOString();
   const id='scan-p252f-'+Date.now().toString(36);
+  void notifySmed('scan_started',{scan_id:id,total:p252fCommands.length});
   const wasBridgeActive=bridgeActive;
   const entries=[];
   let serverReady=false;
@@ -354,6 +355,7 @@ $('p252fCheck').onclick=async()=>{
       let response='',ok=false;
       try{response=await run(command);ok=true}catch(e){response=err(e)}
       entries.push({time:new Date().toISOString(),command,ok,response});
+      if(command==='2117')void notifySmed('reading',{scan_id:id,command,progress:entries.length,total:p252fCommands.length});
       const state={id,started,entries,total:p252fCommands.length,complete:false};
       try{localStorage.setItem(p252fSnapshotKey,JSON.stringify(state))}catch(e){log('INFO','P252F lagring: '+err(e))}
       $('p252fResult').textContent=p252fReport(state);
@@ -371,6 +373,7 @@ $('p252fCheck').onclick=async()=>{
     if(serverReady)try{await api('/device/scan','POST',{id,event:complete?'completed':'interrupted',total:p252fCommands.length})}
       catch(e){log('BRO','P252F sluttstatus ikke sendt: '+err(e))}
     refreshP252F();
+    void notifySmed(complete?'scan_completed':'scan_interrupted',{scan_id:id,progress:entries.length,total:p252fCommands.length});
     p252fRunning=false;$('p252fCheck').disabled=false;
     if(wasBridgeActive&&connected()&&$('session').value.trim().length>=24)await startBridge();
   }
@@ -405,7 +408,8 @@ async function autoFirstScan(){
     }catch(e){log('BRO','Opplasting av ECU-blokk feilet: '+err(e))}
   };
   try{
-    await sendScan({event:'started',total:commands.length,version:'0.22-total'});
+    void notifySmed('scan_started',{scan_id:scanId,total:commands.length});
+    await sendScan({event:'started',total:commands.length,version:'0.27-total'});
     log('INFO','Automatisk TOTALSKANN startet – '+commands.length+' lesekommandoer');
     for(const [index,command] of commands.entries()){
       if(scanStopped||!connected())break;
@@ -415,6 +419,7 @@ async function autoFirstScan(){
         response=await run(command);
         ok=true;
       }catch(e){response=err(e)}
+      if(index===0 || index%20===0)void notifySmed('reading',{scan_id:scanId,command,progress:index+1,total:commands.length});
       const entry={time:new Date().toISOString(),command,ok,response};
       entries.push(entry);
       persist(false);
@@ -443,6 +448,7 @@ async function autoFirstScan(){
     $('scanStatus').textContent=status;
     refreshLocalScan();
     log('INFO',status);
+    void notifySmed(complete?'scan_completed':'scan_interrupted',{scan_id:scanId,progress:entries.length,total:commands.length});
     stat(complete?'KDIAG CAN klar – ECU-kartlegging lagret':'KDIAG CAN klar – delvis kartlegging lagret');
   }
 }
@@ -498,6 +504,29 @@ $('traceFile').onchange = async event => {
     $('replay').textContent = err(error);
   }
 };
+// Authenticated event trail lets Smed inspect live events through the connected Render service.
+// A web page cannot independently force a new ChatGPT message or wake ChatGPT.
+async function notifySmed(event, extras={}){
+  const token=$('session').value.trim();
+  if(token.length<24){
+    $('notifyStatus').textContent='Varsling: registrer privat enhetskode for å sende status til Smed.';
+    return false;
+  }
+  try{
+    const url=base()+'/device/event';
+    const response=await fetch(url,{method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({event,...extras})});
+    if(!response.ok)throw Error('HTTP '+response.status);
+    $('notifyStatus').textContent='Status sendt til Smed via Render: '+event+
+      ' · '+new Date().toLocaleTimeString('no-NO');
+    return true;
+  }catch(e){
+    $('notifyStatus').textContent='Status ikke sendt: '+err(e);
+    log('BRO','Enhetsvarsling: '+err(e));
+    return false;
+  }
+}
 async function connect(){
   if(connecting || connected())return;
   connecting=true;
@@ -514,6 +543,7 @@ async function connect(){
     stat('KDIAG tilkoblet – initialiserer CAN automatisk…');
     $('channels').textContent='FFF0 tjeneste • FFF2 sending • FFF1 mottak';
     log('INFO','KDIAG BLE/GATT tilkoblet – automatisk CAN og bro oppstart');
+    void notifySmed('connected');
     await init();
     stat('KDIAG tilkoblet – CAN 7E0 klar');
     {
@@ -537,6 +567,7 @@ function onKdiagDisconnected(){
   stat('BLE frakoblet – automatisk gjenoppretting når Bluefy er aktiv');
   $('backgroundStatus').textContent='Bluetooth-forbindelsen ble avbrutt. Gjenoppretter når Bluefy er i forgrunnen.';
   log('BLE','KDIAG frakoblet; lagret enhet beholdes');
+  void notifySmed('disconnected');
   if(!manualDisconnect && !document.hidden) void resumeKdiag();
 }
 async function resumeKdiag(){
@@ -737,6 +768,6 @@ async function poll(){if(!bridgeActive)return;try{let r=await api('/device/next'
   if(!safeReadCommands.has(command))throw Error('Fjernkommando ikke i godkjent lesekatalog');
   answer=await run(command);
 }}catch(e){answer=err(e);ok=false}await api('/device/result','POST',{id:r.task.id,ok,response:answer})}}catch(e){log('BRO',err(e))}if(bridgeActive)bridgeTimer=setTimeout(poll,1500)}
-async function startBridge(){try{if(bridgeActive)return;if(scanRunning)throw Error('Kartlegging pågår');if(!connected())throw Error('Koble til KDIAG først');if(!canReady)await init();bridgeBase=base();bridgeKey=$('session').value.trim();if(bridgeKey.length<24)throw Error('Enhetskoden må være minst 24 tegn');await api('/device/hello','POST',{device:'KONNWEI KDIAG',version:'0.26'});bridgeActive=true;saveDeviceToken();$('bridgeStatus').textContent='Bro aktiv: KDIAG + Render';log('INFO','Fjernbro koblet til Render');poll()}catch(e){log('BRO',err(e));$('bridgeStatus').textContent=err(e)}}function stopBridge(){bridgeActive=false;clearTimeout(bridgeTimer);$('bridgeStatus').textContent='Bro ikke aktiv'}$('bridgeOn').onclick=startBridge;$('bridgeOff').onclick=stopBridge;
-$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(loglines.join('\n'))}catch(e){log('FEIL',err(e))}};$('export').onclick=()=>{const url=URL.createObjectURL(new Blob([loglines.join('\n')],{type:'text/plain'}));let a=document.createElement('a');a.href=url;a.download='SmedOBD-v012-logg.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};window.addEventListener('unhandledrejection',e=>log('FEIL','Promise: '+err(e.reason)));log('INFO','v0.26 startet – Bluefy med eksport av full ECU-skann og rapport');
+async function startBridge(){try{if(bridgeActive)return;if(scanRunning)throw Error('Kartlegging pågår');if(!connected())throw Error('Koble til KDIAG først');if(!canReady)await init();bridgeBase=base();bridgeKey=$('session').value.trim();if(bridgeKey.length<24)throw Error('Enhetskoden må være minst 24 tegn');await api('/device/hello','POST',{device:'KONNWEI KDIAG',version:'0.27'});bridgeActive=true;saveDeviceToken();$('bridgeStatus').textContent='Bro aktiv: KDIAG + Render';log('INFO','Fjernbro koblet til Render');poll()}catch(e){log('BRO',err(e));$('bridgeStatus').textContent=err(e)}}function stopBridge(){bridgeActive=false;clearTimeout(bridgeTimer);$('bridgeStatus').textContent='Bro ikke aktiv'}$('bridgeOn').onclick=startBridge;$('bridgeOff').onclick=stopBridge;
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(loglines.join('\n'))}catch(e){log('FEIL',err(e))}};$('export').onclick=()=>{const url=URL.createObjectURL(new Blob([loglines.join('\n')],{type:'text/plain'}));let a=document.createElement('a');a.href=url;a.download='SmedOBD-v012-logg.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};window.addEventListener('unhandledrejection',e=>log('FEIL','Promise: '+err(e.reason)));log('INFO','v0.27 startet – Bluefy med eksport av full ECU-skann og rapport');
 })();</script></body></html>

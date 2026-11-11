@@ -1,0 +1,40 @@
+name: Smed Analyseverksted
+on:
+  push:
+    branches: [smed-analysis]
+    paths:
+      - 'analysis-lab/**'
+      - '.github/workflows/smed-analysis.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: smed-analysis
+  cancel-in-progress: false
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.22.1'
+      - name: Validate analysis boundaries
+        run: python3 -m unittest discover -s analysis-lab/tests -v
+      - name: Install fixed REA version without install scripts
+        run: |
+          npm install --prefix "${RUNNER_TEMP}/rea-tool" --no-audit --no-fund --ignore-scripts --save-exact rea-agents@6.7.0
+          echo "${RUNNER_TEMP}/rea-tool/node_modules/.bin" >> "${GITHUB_PATH}"
+      - name: Analyze files without starting target
+        run: python3 analysis-lab/scripts/analyze.py --output "${RUNNER_TEMP}/smed-reports"
+      - name: Retain reports for one day
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: smed-analysis-${{ github.run_number }}
+          path: ${{ runner.temp }}/smed-reports
+          retention-days: 1
+          if-no-files-found: warn

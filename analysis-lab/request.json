@@ -1,0 +1,7 @@
+{
+  "run_id": "demo-001",
+  "target": "targets/demo",
+  "question": "Hvilke moduler beregner summen, og hvordan henger de sammen?",
+  "authorized": true,
+  "public_ok": true
+}

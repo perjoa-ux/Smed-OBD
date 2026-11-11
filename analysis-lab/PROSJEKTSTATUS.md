@@ -15,6 +15,6 @@ Valgt teknologi: REA CLI 6.7.0, Python 3, Node 24.22.1, standard GitHub Actions 
 
 Verifisert lokalt: REA installert med installasjonsskript deaktivert. Statisk analyse av eksempelet returnerte exit 0 og ok=true. Test av målgrenser bestått. Målprogrammet har en throw-setning som ville feilet dersom det ble kjørt; analysen fullførte uten å starte det.
 
-GitHub-kjøring: skal kontrolleres etter publisering; lokal suksess er ikke bevis på Actions-kjøring.
+GitHub-kjøring: BESTÅTT 11. november 2026 kl. 09:38 norsk tid. Alle steg fullført med success, analyse exit 0, seks rapportfiler lastet opp. Kjøring: https://github.com/perjoa-ux/Smed-OBD/actions/runs/42988596087 . Testet commit: 9c7a0127cc882d0834c0b822113a792f6f7776f3. Rapportartefakt: smed-analysis-1 (18341 byte), utløper 12. november 2026 kl. 09:38. GitHub-loggene og kildekoden bevarer verifikasjon og reproduksjonsgrunnlag.
 
 Omfang: JavaScript/TypeScript. Ghidra/ReVa, APK og native binæranalyse er ikke installert. Ingen direkte MCP-tilkobling eller automatisk AI-rekonstruksjon inngår. Resultatene kan tolkes av Smed i samtalen og brukes som grunnlag for videre bygging.

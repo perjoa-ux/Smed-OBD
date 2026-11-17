@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { createNetVakt } from './nettvakt.mjs';
 import { randomUUID, timingSafeEqual, createHmac, createHash, randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +10,7 @@ const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const STATIC_FILES = new Map([['/', 'index.html'], ['/index.html', 'index.html'], ['/4n14-egr-dpf.html', '4n14-egr-dpf.html']]);
 const DEVICE_TOKEN = process.env.SMED_DEVICE_TOKEN || '';
 const AGENT_TOKEN = process.env.SMED_AGENT_TOKEN || '';
+const netwatch = createNetVakt(AGENT_TOKEN);
 const ALLOWED_ORIGIN = process.env.SMED_ALLOWED_ORIGIN || '*';
 const MAX_BODY = 8192;
 const TTL_MS = 60000;
@@ -215,6 +217,7 @@ const mcpTools=[
   {name:'smed_command_result',description:'Fetch the outcome of a previously queued ECU diagnostic command by task ID.',
     annotations:{readOnlyHint:true},inputSchema:{type:'object',properties:{id:{type:'string'}},required:['id'],additionalProperties:false}}
 ];
+mcpTools.push(...netwatch.tools);
 function toolResponse(obj,error=false){return {content:[{type:'text',text:JSON.stringify(obj)}],isError:error};}
 function mcpHandle(request) {
   const id=request?.id??null;
@@ -228,6 +231,7 @@ function mcpHandle(request) {
   if(request.method==='tools/call') {
     const name=request.params?.name, args=request.params?.arguments||{};
     expire();
+    if(name.startsWith('nettvakt_')) return ok(toolResponse(netwatch.handleTool(name,args)));
     if(name==='smed_bridge_status')return ok(toolResponse({online:Date.now()-lastHello<15000,
       pending:[...tasks.values()].filter(x=>['running','queued'].includes(x.state)).length,read_only:true}));
     if(name==='smed_ecu_command') {
@@ -350,6 +354,7 @@ const server = createServer(async (req,res) => {
   if (req.method === 'OPTIONS') {res.writeHead(204);return res.end();}
   const url = new URL(req.url,'http://localhost');
   const path = url.pathname;
+  if (path.startsWith('/nettvakt/')) return netwatch.handleHttp(req,res,path);
   if (path.startsWith('/oauth/') || path.startsWith('/.well-known/')) {
     try { return await oauthRoute(req,res,path,url); }
     catch(e) {return oauthError(res,400,'invalid_request');}

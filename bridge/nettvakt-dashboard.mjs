@@ -155,6 +155,7 @@ export function createNetVaktDashboard(agentToken, netwatch) {
         mac_health: mac.mac_health,
         devices: devices.devices,
         alerts: alerts.alerts,
+        events: alerts.events || [],
         smartlife: alerts.smartlife,
       }), 'application/json; charset=utf-8');
     }

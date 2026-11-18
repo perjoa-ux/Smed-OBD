@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - "bridge/nettvakt*"
+      - "nettvakt/agent/**"
       - "bridge/server.mjs"
       - ".github/workflows/nettvakt-tests.yml"
   workflow_dispatch:
@@ -21,5 +22,12 @@ jobs:
           node --check bridge/server.mjs
           node --check bridge/nettvakt-dashboard.mjs
           node --check bridge/nettvakt-dashboard.js
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Mac agent syntax and discovery tests
+        run: |
+          python -m py_compile nettvakt/agent/nettvakt_agent.py nettvakt/agent/smed_health.py
+          (cd nettvakt/agent && python -m unittest -v test_nettvakt_agent.py)
       - name: Nettvakt tests
         run: node --test bridge/nettvakt.test.mjs bridge/nettvakt-dashboard.test.mjs

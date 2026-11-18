@@ -79,3 +79,36 @@ test('retains bounded network failure and recovery history', async () => {
   assert.equal(recovery[0].kind,'recovery');
   assert.equal(app.handleTool('nettvakt_status',{}).report_sequence,3);
 });
+
+test('inventory retains prior sightings without claiming absent devices are offline', async () => {
+  const app = createNetVakt(root);
+  const base = {host:'SMED-01',gateway:'192.168.86.1',
+    checks:{gateway_ms:2,dns_ok:true,internet_ok:true},alerts:[],smartlife:[]};
+  const first = [{ip:'192.168.86.11',mac:'aa:bb:cc:dd:ee:ff',state:'observed',source:'arp'}];
+  assert.equal((await call(app,'/nettvakt/report','POST',{...base,devices:first})).status,200);
+  assert.equal(app.handleTool('nettvakt_inventory',{}).known_device_count,1);
+  assert.equal(app.handleTool('nettvakt_inventory',{}).inventory[0].currently_observed,true);
+  // An unrelated new MAC must be detected, the first baseline must not be labeled new.
+  assert.equal(app.handleTool('nettvakt_alerts',{}).events.length,0);
+  const second = [{ip:'192.168.86.12',mac:'cc:dd:ee:ff:00:11',state:'observed',source:'arp'}];
+  assert.equal((await call(app,'/nettvakt/report','POST',{...base,devices:second})).status,200);
+  const inv=app.handleTool('nettvakt_inventory',{});
+  assert.equal(inv.inventory.length,2);
+  assert.equal(inv.known_device_count,2);
+  assert.equal(inv.currently_observed_count,1);
+  const older=inv.inventory.find(x=>x.mac==='aa:bb:cc:dd:ee:ff');
+  assert.equal(older.currently_observed,false);
+  assert.ok(older.first_seen && older.last_seen);
+  assert.equal(app.handleTool('nettvakt_alerts',{}).events.at(0).kind,'info');
+  assert.match(app.handleTool('nettvakt_alerts',{}).events.at(0).message,/Ny enhet observert/);
+  // User-defined ping target that is unavailable is never counted as seen.
+  assert.equal((await call(app,'/nettvakt/report','POST',{...base,
+    devices:[{ip:'192.168.86.99',mac:'',state:'offline',source:'target'}]})).status,200);
+  assert.equal(app.handleTool('nettvakt_inventory',{}).known_device_count,2);
+  assert.equal(app.handleTool('nettvakt_inventory',{}).currently_observed_count,0);
+  // MAC address takes precedence when DHCP gives a device another address.
+  assert.equal((await call(app,'/nettvakt/report','POST',{...base,
+    devices:[{ip:'192.168.86.25',mac:'aa:bb:cc:dd:ee:ff',state:'observed',source:'arp'}]})).status,200);
+  assert.equal(app.handleTool('nettvakt_inventory',{}).known_device_count,2);
+  assert.equal(app.handleTool('nettvakt_inventory',{}).inventory.find(x=>x.mac==='aa:bb:cc:dd:ee:ff').ip,'192.168.86.25');
+});

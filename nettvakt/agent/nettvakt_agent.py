@@ -89,7 +89,7 @@ def discover_lan(gateway, interface, enabled=True):
     This is not a substitute for the Nest router's authenticated client list.
     """
     global _SCAN_CURSOR
-    if not enabled or not gateway or not re.fullmatch(r"en\\d+", interface or ""):
+    if not enabled or not gateway or not re.fullmatch(r"en\d+", interface or ""):
         return []
     local = run("ipconfig", "getifaddr", interface, timeout=3).strip()
     try:

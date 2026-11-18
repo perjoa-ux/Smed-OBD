@@ -68,7 +68,7 @@ function validChallenge(value, token) {
   const expires = Number(parts[1]);
   if (!Number.isSafeInteger(expires) || expires <= Date.now() || expires > Date.now() + FORM_TTL_MS) return false;
   if (!/^[a-f0-9]{32}$/.test(parts[2]) || !/^[a-f0-9]{64}$/.test(parts[3])) return false;
-  return safeEqual(parts[3], sign(token, 'form:' + parts.slice(0, 3).join('.'));
+  return safeEqual(parts[3], sign(token, 'form:' + parts.slice(0, 3).join('.')));
 }
 
 function loginPage(token, wrong = false) {

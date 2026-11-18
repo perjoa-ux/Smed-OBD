@@ -31,6 +31,7 @@ trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 echo "SMED-01: henter og kontrollerer ny agent ..."
 curl --fail --location --silent --show-error --max-time 30 "$BASE/nettvakt_agent.py" -o "$TMP/nettvakt_agent.py"
 curl --fail --location --silent --show-error --max-time 30 "$BASE/smed_health.py" -o "$TMP/smed_health.py"
+curl --fail --location --silent --show-error --max-time 30 "$BASE/test_nettvakt_agent.py" -o "$TMP/test_nettvakt_agent.py"
 "$PYTHON" - "$TMP" <<'PY'
 import pathlib,sys
 root=pathlib.Path(sys.argv[1])
@@ -46,6 +47,7 @@ if not callable(nettvakt_agent.collect):
     raise SystemExit("Ugyldig agentmodul")
 print("Programkontroll OK")
 PY
+(cd "$TMP" && "$PYTHON" -m unittest -q test_nettvakt_agent.py)
 
 for f in nettvakt_agent.py smed_health.py; do
   if [ -f "$DIR/$f" ]; then cp -p "$DIR/$f" "$TMP/backup-$f"; fi

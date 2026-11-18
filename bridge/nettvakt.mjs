@@ -10,6 +10,47 @@ export function createNetVakt(agentToken) {
   let receivedAt = 0;
   const changes = [];
   let reportSequence = 0;
+  // Inventory remembers previously observed devices; it is not a router client list.
+  // Intentionally ephemeral: no credentials, no disk/database, and no public API.
+  const knownDevices = new Map();
+  const INVENTORY_MAX = 512;
+  const INVENTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+  const deviceKey = device => /^[a-f0-9]{2}(?::[a-f0-9]{2}){5}$/i.test(device.mac)
+    ? 'mac:' + device.mac.toLowerCase() : 'ip:' + device.ip;
+  function rememberDevices(devices, firstReport) {
+    const now = Date.now();
+    const seen = new Set();
+    for (const d of devices) {
+      if (d.state === 'offline') continue; // Unresponsive targets are NOT proof of presence.
+      const key = deviceKey(d);
+      seen.add(key);
+      const entry = knownDevices.get(key);
+      if (entry) {
+        entry.ip = d.ip; entry.mac = d.mac || entry.mac; entry.name = d.name || entry.name;
+        entry.source = d.source; entry.last_seen = new Date(now).toISOString();
+        entry.last_seen_ms = now; entry.seen_reports++; entry.currently_observed = true;
+      } else {
+        knownDevices.set(key, {
+          key, ip: d.ip, mac: d.mac, name: d.name, source: d.source,
+          first_seen: new Date(now).toISOString(), last_seen: new Date(now).toISOString(),
+          last_seen_ms: now, seen_reports: 1, currently_observed: true,
+        });
+        if (!firstReport) addChange('info', 'Ny enhet observert: ' + (d.name || d.ip));
+      }
+    }
+    for (const [key, d] of knownDevices) {
+      if (!seen.has(key)) d.currently_observed = false;
+      if (now - d.last_seen_ms > INVENTORY_TTL_MS) knownDevices.delete(key);
+    }
+    if (knownDevices.size > INVENTORY_MAX) {
+      const oldest = [...knownDevices.entries()].sort((a,b) => a[1].last_seen_ms - b[1].last_seen_ms);
+      for (const [key] of oldest.slice(0, knownDevices.size - INVENTORY_MAX)) knownDevices.delete(key);
+    }
+  }
+  const inventoryList = () => [...knownDevices.values()]
+    .sort((a,b) => b.last_seen_ms - a.last_seen_ms)
+    .map(({last_seen_ms, ...item}) => item);
+
   const addChange = (kind, value) => {
     changes.unshift({ at: new Date().toISOString(), kind, message: value });
     if (changes.length > 30) changes.length = 30;
@@ -96,6 +137,8 @@ export function createNetVakt(agentToken) {
       mac_health_available: report.mac_health !== null,
       report_sequence: reportSequence,
       event_count: changes.length,
+      known_device_count: knownDevices.size,
+      currently_observed_count: [...knownDevices.values()].filter(d => d.currently_observed).length,
     };
   }
   function expire() {
@@ -131,6 +174,7 @@ export function createNetVakt(agentToken) {
           smartlife_source: safeString(data.smartlife_source, 40) || 'not_connected',
           mac_health: cleanMacHealth(data.mac_health),
         };
+        rememberDevices(report.devices, reportSequence === 0);
         reportSequence++;
         if (was) {
           if (was.dns_ok !== report.checks.dns_ok)
@@ -166,6 +210,7 @@ export function createNetVakt(agentToken) {
     { name: 'nettvakt_status', description: 'Read live local-network health via the Mac sensor. Never claim data is live when the sensor is stale.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'nettvakt_mac_health', description: 'Read latest Mac CPU load, memory, disk SMART/space, uptime and battery from SMED-01. Requires online sensor; missing temperatures are not measured.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'nettvakt_devices', description: 'Read the latest observed local IP/MAC device inventory. A device missing from ARP does not prove it is offline.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
+    { name: 'nettvakt_inventory', description: 'Read an ephemeral seven-day register of previously observed LAN devices with first/last observation. Not a complete Google Nest router client list; missing means not observed, not offline.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'nettvakt_alerts', description: 'Read gateway/DNS/internet alerts and optional Home Assistant SmartLife/Tuya device states.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'nettvakt_probe', description: 'Request a SAFE local ping or refreshed status from the Mac sensor. No device configuration or power changes.', annotations: { readOnlyHint: false }, inputSchema: { type: 'object', properties: { kind: { type: 'string', enum: ['ping', 'refresh'] }, ip: { type: 'string', description: 'Existing inventory IPv4 for ping; omit for refresh.' } }, required: ['kind'], additionalProperties: false } },
     { name: 'nettvakt_probe_result', description: 'Read a previously queued network probe result.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'], additionalProperties: false } },
@@ -175,6 +220,7 @@ export function createNetVakt(agentToken) {
     if (name === 'nettvakt_status') return status();
     if (name === 'nettvakt_mac_health') return { ...status(), mac_health: report?.mac_health || null };
     if (name === 'nettvakt_devices') return { ...status(), devices: report?.devices || [] };
+    if (name === 'nettvakt_inventory') return { ...status(), inventory: inventoryList() };
     if (name === 'nettvakt_alerts') return { ...status(), alerts: report?.alerts || [], smartlife: report?.smartlife || [], events: changes.slice() };
     if (name === 'nettvakt_probe') {
       if (!online()) return { error: 'Local Mac agent offline; cannot probe.' };

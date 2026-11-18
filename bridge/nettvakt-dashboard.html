@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b121b">
+  <meta name="description" content="Privat kontrollpanel for SMED-01 og Smed Nettvakt">
+  <title>SMED-01 · Nettvakt</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b121b;--panel:#172330;--panel2:#111d29;--stroke:#2c3d4e;--text:#f2f6f9;--muted:#aabac9;--orange:#ffaf61;--green:#79deb4;--red:#ff9d98;--yellow:#ffcf83;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1b3041 0,#0e1924 40%,var(--bg) 78%);color:var(--text);min-height:100vh}
+    button{cursor:pointer;font:inherit}button:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+    .wrap{max-width:1080px;margin:0 auto;padding:24px 17px 60px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;display:grid;place-items:center;border-radius:13px;border:1px solid #986037;background:#33271d;color:var(--orange);font-size:25px}
+    .brand h1{margin:0;font-size:18px;letter-spacing:.09em}.brand small{font-size:10px;letter-spacing:.14em;color:var(--muted)}
+    .actions{display:flex;align-items:center;gap:8px}.btn{border:1px solid #466073;background:#22374b;border-radius:10px;padding:9px 13px;color:white;font-weight:700}.btn:hover{background:#2e4559}
+    .hero{padding:38px 4px 22px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+    .eyebrow{font-size:11px;letter-spacing:.15em;font-weight:800;color:var(--orange);margin:0 0 9px}.hero h2{font-size:clamp(30px,6vw,48px);letter-spacing:-.04em;margin:0;line-height:1.07}.hero p{color:var(--muted);font-size:13px;line-height:1.5;margin:12px 0 0}
+    .state{border-radius:50px;padding:12px 15px;background:#25323d;border:1px solid #586878;display:flex;align-items:center;gap:9px;font-weight:800}.state i{width:9px;height:9px;border-radius:50%;background:#a0aebb}.state.online{color:#c8f5dd;background:#173b30;border-color:#3a765f}.state.online i{background:var(--green)}.state.offline{color:#ffd1cd;background:#402929;border-color:#794343}.state.offline i{background:var(--red)}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.panel{border-radius:17px;background:linear-gradient(145deg,#192a38,#111d29);border:1px solid var(--stroke);padding:18px;min-width:0}
+    .panel .label{font-size:12px;color:var(--muted);font-weight:650}.panel .value{font-size:clamp(24px,4vw,34px);font-weight:820;letter-spacing:-.035em;margin:13px 0 5px;word-break:break-word}
+    .panel .hint{font-size:11px;color:#9fb0bd;line-height:1.5;min-height:16px}.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:25px 0 13px}
+    .section-head h3{font-size:20px;margin:0;letter-spacing:-.02em}.section-head p{color:var(--muted);font-size:12px;margin:0}
+    .split{display:grid;grid-template-columns:1.15fr 1fr;gap:13px}.detail{margin:0;display:grid;gap:10px}.detail div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2b3b48;padding:6px 0 10px}
+    .detail div:last-child{border-bottom:none}.detail dt{color:var(--muted);font-size:13px}.detail dd{margin:0;font-weight:740;font-size:13px;text-align:right;overflow-wrap:anywhere}
+    .list{list-style:none;padding:0;margin:0;display:grid;gap:8px}.list li{border:1px solid #344653;border-radius:10px;padding:11px 12px;background:#121f2a;line-height:1.45;font-size:13px;overflow-wrap:anywhere}
+    .list li .minor{font-size:11px;color:var(--muted);margin-top:4px}.good{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--yellow)}.muted{color:var(--muted)}
+    .table-wrap{overflow:auto}.device-table{border-collapse:collapse;width:100%;min-width:440px}.device-table th,.device-table td{text-align:left;border-bottom:1px solid #2b3d4a;padding:12px 8px;font-size:13px;vertical-align:top}
+    .device-table th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}.device-table tr:last-child td{border-bottom:none}
+    .device-table td span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+    .note{font-size:12px;line-height:1.6;color:#a9bac8;margin-top:13px}
+    footer{margin-top:26px;color:#8298a9;font-size:11px;line-height:1.6}
+    @media(max-width:810px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}}
+    @media(max-width:450px){.wrap{padding:18px 12px 40px}.panel{padding:15px}.grid{gap:10px}.hero{padding-top:32px}.brand h1{font-size:16px}.actions .btn{padding:8px 10px}.panel .value{font-size:25px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+  <script src="/nettvakt/dashboard.js" defer></script>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="brand"><div class="logo" aria-hidden="true">⚒</div><div><h1>SMED / NETTVAKT</h1><small>SMED-01 · PRIVAT KONTROLLPANEL</small></div></div>
+      <div class="actions">
+        <button class="btn" id="refresh" type="button">Oppdater</button>
+        <form method="post" action="/nettvakt/logout"><button class="btn" type="submit">Logg ut</button></form>
+      </div>
+    </header>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">NETTVERKSOVERVÅKING / GRATIS</p>
+        <h2>Hjemmenettet.<br>Under oppsyn.</h2>
+        <p id="last-update" role="status" aria-live="polite">Henter siste rapport …</p>
+      </div>
+      <div class="state" id="state"><i aria-hidden="true"></i><span id="state-text">Kontrollerer …</span></div>
+    </section>
+    <section class="grid" aria-label="Nettverksstatus">
+      <div class="panel"><div class="label">Observerte enheter</div><div class="value" id="device-count">—</div><div class="hint">Fra lokal ARP-oversikt</div></div>
+      <div class="panel"><div class="label">Ruter / gateway</div><div class="value" id="gateway" style="font-size:clamp(17px,3vw,24px)">—</div><div class="hint" id="gateway-ping">Svar fra ruter: —</div></div>
+      <div class="panel"><div class="label">DNS-oppslag</div><div class="value" id="dns">—</div><div class="hint">Test fra SMED-01</div></div>
+      <div class="panel"><div class="label">Internettilgang</div><div class="value" id="internet">—</div><div class="hint">Utgående HTTPS-test</div></div>
+    </section>
+    <div class="section-head"><h3>MacBook Pro · SMED-01</h3><p>Helsemålinger fra den lokale agenten</p></div>
+    <section class="grid" aria-label="Maskinhelse">
+      <div class="panel"><div class="label">CPU-belastning</div><div class="value" id="cpu">—</div><div class="hint" id="cpu-hint">1 minutts load average</div></div>
+      <div class="panel"><div class="label">Tilgjengelig minne</div><div class="value" id="ram">—</div><div class="hint" id="ram-hint">Systemets minneberegning</div></div>
+      <div class="panel"><div class="label">Ledig diskplass</div><div class="value" id="disk">—</div><div class="hint" id="disk-hint">Lokal harddisk</div></div>
+      <div class="panel"><div class="label">Batteri</div><div class="value" id="battery">—</div><div class="hint" id="battery-hint">Lading / strømforsyning</div></div>
+    </section>
+    <div class="section-head"><h3>Detaljer og varsler</h3><p>Kun lesetilgang</p></div>
+    <div class="split">
+      <section class="panel">
+        <dl class="detail">
+          <div><dt>Diskens S.M.A.R.T.</dt><dd id="smart">—</dd></div>
+          <div><dt>Oppetid</dt><dd id="uptime">—</dd></div>
+          <div><dt>macOS-versjon</dt><dd id="os-version">—</dd></div>
+          <div><dt>Temperatur</dt><dd id="temperature">Ikke målt</dd></div>
+          <div><dt>SmartLife / Home Assistant</dt><dd id="smartlife-status">—</dd></div>
+        </dl>
+      </section>
+      <section class="panel" aria-label="Varsler"><ul class="list" id="alerts"><li class="muted">Leser varsler …</li></ul></section>
+    </div>
+    <div class="section-head"><h3>Enheter på nettverket</h3><p id="devices-heading">Registrert av MacBooken</p></div>
+    <section class="panel">
+      <div class="table-wrap">
+        <table class="device-table"><thead><tr><th>IP-adresse</th><th>MAC-adresse</th><th>Observasjon</th></tr></thead><tbody id="devices"><tr><td colspan="3">Laster …</td></tr></tbody></table>
+      </div>
+      <p class="note">Merk: Listen bygger på MacBookens ARP-tabell, ikke en fullstendig skanning. En enhet som mangler i listen, er ikke nødvendigvis offline. Status oppdateres automatisk cirka hvert 30. sekund.</p>
+    </section>
+    <footer>SMED NETTVAKT · Utgående kryptert forbindelse fra MacBook til Render · Ingen ruterkonfigurasjon eller enhetsstyring · Data vises kun etter innlogging.</footer>
+  </main>
+</body>
+</html>

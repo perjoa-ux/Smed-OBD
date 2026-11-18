@@ -18,10 +18,12 @@ Mål: Lokal, gratis og privat overvåking av SMED-01 og hjemmenettverket via Mac
   - bridge/nettvakt-dashboard.test.mjs (autentiserings- og regresjonstester)
   - .github/workflows/nettvakt-tests.yml (Node.js syntaks og testkjøring)
 - [FERDIG] Dashboard integrert i bridge/server.mjs uten å endre eksisterende OBD-kommandoer.
-- [FERDIG] Dashboard-koden publisert til Render gjennom deploy dep-dbujsi8m7kps73ckl6vg, status live.
-- [GJENSTÅR] Bekrefte første innlogging og visning av ekte data i brukerens nettleser.
+- [FERDIG] Dashboard-koden publisert til Render gjennom deploy dep-dbukdvojo6nc73ac6md0, status live. Responsivt kontrollpanel med navngiving per nettleser og midlertidig logg over nettverksfeil/gjenoppretting.
+- [FERDIG] Første innlogging og visning på iPhone bekreftet av brukerskjermbilde 18.11.2026 (SMED-01 online, 4 ARP-enheter, DNS/internett OK).
 - [GJENSTÅR] Verifisere GitHub Actions-resultatet for dashboard-testene; testene er lagt inn, resultat ikke avlest.
 - [GJENSTÅR] Eventuell separat sikker rotasjon av SMED_AGENT_TOKEN som tidligere ble eksponert i chat.
+- [FERDIG] Egen ChatGPT-automatisering «SMED-01 nettvaktalarm» kontrollere offentlig /nettvakt/health hver time og varsle ved vedvarende agentbortfall.
+- [UNDER ARBEID] Catalina-RAM: Dashboard viser kjent installert RAM når ledig minne er ukjent. For mer presis andel er vm_stat-reserveberegning lagt i nettvakt/agent/smed_health.py; den lokale filen på MacBooken er ikke oppdatert ennå.
 - [GJENSTÅR] SmartLife via Home Assistant/Tuya og eventuell kompatibel Mac-temperatursensor.
 
 ## Kontrollpanel
@@ -37,5 +39,5 @@ Innlogging skjer med eksisterende SMED_AGENT_TOKEN fra Render. Nøkkelen skal ba
 - Catalina skal ikke eksponeres direkte mot internett; kun utgående HTTPS.
 - ARP er ikke komplett enhetsoversikt, og manglende ARP-oppføring betyr ikke offline.
 - Datasett i Render lagres i minnet og kan nullstilles ved restart; agenten sender normalt ny rapport innen omtrent ett minutt.
-- Render gratisnivå kan spinne ned ved inaktivitet. Ingen garanti for uavbrutt varslingsdrift.
+- Render gratisnivå kan spinne ned ved inaktivitet. Ingen garanti for uavbrutt varslingsdrift. ChatGPT-automatisering er en timelig kontroll av agentens tilkobling, ikke kontinuerlig varsling om alle netthendelser.
 - Nettvakt har ikke direkte styring av Google Nest, SmartLife eller kameraopptak. Kontrollpanelet er skrivebeskyttet.

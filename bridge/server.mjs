@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { createNetVakt } from './nettvakt.mjs';
+import { createNetVaktDashboard } from './nettvakt-dashboard.mjs';
 import { randomUUID, timingSafeEqual, createHmac, createHash, randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,7 @@ const STATIC_FILES = new Map([['/', 'index.html'], ['/index.html', 'index.html']
 const DEVICE_TOKEN = process.env.SMED_DEVICE_TOKEN || '';
 const AGENT_TOKEN = process.env.SMED_AGENT_TOKEN || '';
 const netwatch = createNetVakt(AGENT_TOKEN);
+const netwatchDashboard = createNetVaktDashboard(AGENT_TOKEN, netwatch);
 const ALLOWED_ORIGIN = process.env.SMED_ALLOWED_ORIGIN || '*';
 const MAX_BODY = 8192;
 const TTL_MS = 60000;
@@ -354,6 +356,8 @@ const server = createServer(async (req,res) => {
   if (req.method === 'OPTIONS') {res.writeHead(204);return res.end();}
   const url = new URL(req.url,'http://localhost');
   const path = url.pathname;
+  if (['/nettvakt/dashboard','/nettvakt/dashboard.js','/nettvakt/dashboard-data','/nettvakt/login','/nettvakt/logout'].includes(path))
+    return netwatchDashboard.handleHttp(req,res,path);
   if (path.startsWith('/nettvakt/')) return netwatch.handleHttp(req,res,path);
   if (path.startsWith('/oauth/') || path.startsWith('/.well-known/')) {
     try { return await oauthRoute(req,res,path,url); }

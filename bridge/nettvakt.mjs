@@ -8,6 +8,12 @@ export function createNetVakt(agentToken) {
   const commands = new Map();
   let report = null;
   let receivedAt = 0;
+  const changes = [];
+  let reportSequence = 0;
+  const addChange = (kind, value) => {
+    changes.unshift({ at: new Date().toISOString(), kind, message: value });
+    if (changes.length > 30) changes.length = 30;
+  };
   const online = () => receivedAt > 0 && Date.now() - receivedAt < 180_000;
   const equal = (a, b) => {
     const x = Buffer.from(a || '', 'utf8');
@@ -88,6 +94,8 @@ export function createNetVakt(agentToken) {
       smartlife_count: report.smartlife.length,
       smartlife_source: report.smartlife_source,
       mac_health_available: report.mac_health !== null,
+      report_sequence: reportSequence,
+      event_count: changes.length,
     };
   }
   function expire() {
@@ -108,6 +116,7 @@ export function createNetVakt(agentToken) {
             !Array.isArray(data.alerts) || data.alerts.length > 100 ||
             (data.smartlife !== undefined && (!Array.isArray(data.smartlife) || data.smartlife.length > 256)))
           return send(res, 400, { error: 'Invalid report' });
+        const was = report?.checks || null;
         report = {
           host: safeString(data.host, 80),
           gateway: ipv4(data.gateway) ? data.gateway : null,
@@ -122,6 +131,15 @@ export function createNetVakt(agentToken) {
           smartlife_source: safeString(data.smartlife_source, 40) || 'not_connected',
           mac_health: cleanMacHealth(data.mac_health),
         };
+        reportSequence++;
+        if (was) {
+          if (was.dns_ok !== report.checks.dns_ok)
+            addChange(report.checks.dns_ok ? 'recovery' : 'warning', report.checks.dns_ok ? 'DNS-oppslag fungerer igjen' : 'DNS-oppslag feilet');
+          if (was.internet_ok !== report.checks.internet_ok)
+            addChange(report.checks.internet_ok ? 'recovery' : 'warning', report.checks.internet_ok ? 'Internettforbindelsen er tilbake' : 'HTTPS-test for internett feilet');
+          if ((was.gateway_ms !== null) !== (report.checks.gateway_ms !== null))
+            addChange(report.checks.gateway_ms !== null ? 'recovery' : 'warning', report.checks.gateway_ms !== null ? 'Ruteren svarer på ping igjen' : 'Ruteren svarte ikke på ping');
+        }
         receivedAt = Date.now();
         return send(res, 200, { ok: true, devices: report.devices.length, received_at: new Date(receivedAt).toISOString() });
       }
@@ -157,7 +175,7 @@ export function createNetVakt(agentToken) {
     if (name === 'nettvakt_status') return status();
     if (name === 'nettvakt_mac_health') return { ...status(), mac_health: report?.mac_health || null };
     if (name === 'nettvakt_devices') return { ...status(), devices: report?.devices || [] };
-    if (name === 'nettvakt_alerts') return { ...status(), alerts: report?.alerts || [], smartlife: report?.smartlife || [] };
+    if (name === 'nettvakt_alerts') return { ...status(), alerts: report?.alerts || [], smartlife: report?.smartlife || [], events: changes.slice() };
     if (name === 'nettvakt_probe') {
       if (!online()) return { error: 'Local Mac agent offline; cannot probe.' };
       const kind = args?.kind;

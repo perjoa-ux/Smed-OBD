@@ -45,7 +45,24 @@ def _memory_health():
     text = _run('memory_pressure', '-Q', timeout=4)
     match = re.search(r'System-wide free memory percentage:\s*(\d+)%', text)
     available = _number(match.group(1), 0, 100) if match else None
-    return round(total / 1024 ** 2) if total is not None else None, int(available) if available is not None else None
+    if available is None and total:
+        # Catalina may omit the memory_pressure -Q percentage. vm_stat is
+        # available without extra software; this is an estimate, not a
+        # measurement of memory that is physically unused.
+        vm = _run('vm_stat', timeout=4)
+        page_match = re.search(r'page size of\s+(\d+)\s+bytes', vm)
+        if page_match:
+            page_size = int(page_match.group(1))
+            pages = 0
+            matched = 0
+            for label in ('Pages free', 'Pages inactive', 'Pages speculative'):
+                entry = re.search(r'^\s*' + re.escape(label) + r':\s*([\d.]+)', vm, re.M)
+                if entry:
+                    pages += int(entry.group(1).replace('.', ''))
+                    matched += 1
+            if matched and page_size > 0:
+                available = round(min(100, pages * page_size / total * 100), 1)
+    return round(total / 1024 ** 2) if total is not None else None, available
 
 
 def _battery_health():

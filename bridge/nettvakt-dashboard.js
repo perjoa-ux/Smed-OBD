@@ -6,6 +6,27 @@
   const num = (value, digits = 0) => isNum(value) ? value.toLocaleString('nb-NO', {maximumFractionDigits:digits}) : '—';
   const state = $('state');
   let busy = false;
+  const ALIASES_KEY = 'smed_nettvakt_device_names_v1';
+  const aliases = (() => {
+    try {
+      const data = JSON.parse(localStorage.getItem(ALIASES_KEY) || '{}');
+      return data && typeof data === 'object' && !Array.isArray(data) ? Object.assign(Object.create(null), data) : Object.create(null);
+    } catch { return Object.create(null); }
+  })();
+  const deviceKey = d => String(d.mac || d.ip || '').toLowerCase();
+  function renameDevice(d) {
+    const key = deviceKey(d);
+    if (!key) return;
+    const existing = typeof aliases[key] === 'string' ? aliases[key] : '';
+    const entered = window.prompt('Navn på enheten (tomt felt sletter navnet):', existing);
+    if (entered === null) return;
+    const name = entered.trim().slice(0, 40);
+    if (name) aliases[key] = name;
+    else delete aliases[key];
+    try { localStorage.setItem(ALIASES_KEY, JSON.stringify(aliases)); }
+    catch { window.alert('Kunne ikke lagre navnet i denne nettleseren.'); }
+    update();
+  }
 
   const textClass = (element, kind) => {
     element.classList.remove('good', 'bad', 'warn', 'muted');
@@ -62,8 +83,12 @@
 
     put('cpu', num(health.cpu_load_1m, 2));
     put('cpu-hint', isNum(health.cpu_logical_cores) ? '1-minutt load · ' + num(health.cpu_logical_cores) + ' logiske kjerner' : '1 minutts load average');
-    put('ram', isNum(health.memory_free_percent) ? num(health.memory_free_percent) + ' %' : 'Ukjent');
-    put('ram-hint', isNum(health.memory_total_mb) ? 'Totalt ' + num(health.memory_total_mb) + ' MB RAM' : 'Tilgjengelig minne, estimert');
+    // Catalina does not always expose memory_pressure -Q; show measured total instead of a misleading unknown.
+    const freePct = health.memory_free_percent;
+    put('ram', isNum(freePct) ? num(freePct) + ' %' : isNum(health.memory_total_mb) ? num(health.memory_total_mb / 1024, 1) + ' GB' : 'Ikke målt');
+    put('ram-hint', isNum(freePct)
+      ? 'Estimert tilgjengelig · totalt ' + num(health.memory_total_mb) + ' MB'
+      : isNum(health.memory_total_mb) ? 'Installert RAM · tilgjengelig minne ikke målt' : 'Minneverdier mangler');
     put('disk', isNum(health.disk_free_gb) ? num(health.disk_free_gb, 1) + ' GB' : 'Ukjent');
     put('disk-hint', isNum(health.disk_total_gb) ? 'Av ' + num(health.disk_total_gb, 1) + ' GB totalt' : 'Lokal harddisk');
     put('battery', isNum(health.battery_percent) ? num(health.battery_percent) + ' %' : 'Ukjent');
@@ -88,19 +113,45 @@
     }
     if (!warningList.length && online) addItem(alerts, 'Ingen varsler fra siste rapport', 'Dette utelukker ikke alle typer nettverksproblemer.', 'good');
 
+    const eventList = $('events');
+    eventList.replaceChildren();
+    const events = Array.isArray(input.events) ? input.events : [];
+    if (!events.length) addItem(eventList, 'Ingen endringer registrert', 'Hendelser vises ved endring i DNS-, gateway- eller internettilstand.', 'muted');
+    for (const event of events.slice(0, 30)) {
+      const date = new Date(event.at);
+      addItem(eventList, event.message || 'Nettverkshendelse', Number.isNaN(date.getTime()) ? '' : date.toLocaleString('nb-NO'), event.kind === 'warning' ? 'warn' : 'good');
+    }
+
     const list = $('devices');
     list.replaceChildren();
     const devices = Array.isArray(input.devices) ? input.devices : [];
     if (!devices.length) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
-      td.colSpan = 3;
+      td.colSpan = 4;
       td.textContent = 'Ingen enheter observert i siste rapport.';
       tr.append(td);
       list.append(tr);
     }
-    for (const device of devices.slice(0, 256)) {
+    const sorted = devices.slice(0, 256).sort((a,b) => {
+      const ipParts = value => String(value || '').split('.').map(Number);
+      const x = ipParts(a.ip), y = ipParts(b.ip);
+      for (let i = 0; i < 4; i++) if (x[i] !== y[i]) return (x[i] || 0) - (y[i] || 0);
+      return 0;
+    });
+    for (const device of sorted) {
       const tr = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      const knownName = aliases[deviceKey(device)] || (device.ip === st.gateway ? 'Ruter / gateway' : '') || device.name || 'Ukjent enhet';
+      const nameLabel = document.createElement('span');
+      nameLabel.className = 'device-name';
+      nameLabel.textContent = knownName;
+      const aliasButton = document.createElement('button');
+      aliasButton.type = 'button';
+      aliasButton.className = 'alias-button';
+      aliasButton.textContent = aliases[deviceKey(device)] ? 'Endre navn' : 'Navngi';
+      aliasButton.addEventListener('click', () => renameDevice(device));
+      nameCell.append(nameLabel, aliasButton);
       const ip = document.createElement('td');
       ip.textContent = device.ip || 'Ukjent';
       const mac = document.createElement('td');
@@ -115,7 +166,7 @@
         latency.textContent = num(device.latency_ms, 1) + ' ms';
         observed.append(latency);
       }
-      tr.append(ip, mac, observed);
+      tr.append(nameCell, ip, mac, observed);
       list.append(tr);
     }
   }

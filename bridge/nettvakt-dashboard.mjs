@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 const COOKIE = 'smed_nv_session';
 const DURATION_MS = 24 * 60 * 60 * 1000;
 const LOGIN_MAX_BYTES = 4096;
+const FORM_TTL_MS = 60 * 60 * 1000;
 const attempts = new Map();
 
 function securityHeaders(contentType = 'text/html; charset=utf-8') {
@@ -53,9 +54,26 @@ function makeCookie(token) {
   return COOKIE + '=' + value + '.' + sign(token, value) + '; Path=/nettvakt; Secure; HttpOnly; SameSite=Strict; Max-Age=86400';
 }
 
-function loginPage(wrong = false) {
+// A signed form challenge replaces brittle Origin checks on iOS in-app browsers.
+// Off-site pages cannot read this form token, even if the request carries Origin: null.
+function formChallenge(token) {
+  const nonce = randomBytes(16).toString('hex');
+  const data = ['c1', Date.now() + FORM_TTL_MS, nonce].join('.');
+  return data + '.' + sign(token, 'form:' + data);
+}
+function validChallenge(value, token) {
+  if (typeof value !== 'string') return false;
+  const parts = value.split('.');
+  if (parts.length !== 4 || parts[0] !== 'c1') return false;
+  const expires = Number(parts[1]);
+  if (!Number.isSafeInteger(expires) || expires <= Date.now() || expires > Date.now() + FORM_TTL_MS) return false;
+  if (!/^[a-f0-9]{32}$/.test(parts[2]) || !/^[a-f0-9]{64}$/.test(parts[3])) return false;
+  return safeEqual(parts[3], sign(token, 'form:' + parts.slice(0, 3).join('.'));
+}
+
+function loginPage(token, wrong = false) {
   const error = wrong ? '<p class="error" role="alert">Nøkkelen ble ikke godkjent. Kopier SMED_AGENT_TOKEN fra Render.</p>' : '';
-  return '<!doctype html><html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101923"><title>SMED-01 · Innlogging</title><style>*{box-sizing:border-box}body{font:16px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#0b111a;color:#f4f7fb;min-height:100vh;margin:0;display:grid;place-items:center;padding:18px}main{max-width:440px;width:100%;border:1px solid #304354;border-radius:20px;background:#17222e;padding:28px}header{color:#ffad59;font-weight:850;letter-spacing:.13em;font-size:14px}h1{margin:15px 0;font-size:30px}p{line-height:1.55;color:#b8c8d3}label{display:block;margin:22px 0 8px;font-weight:650}input{width:100%;padding:14px;border-radius:10px;background:#0b1520;border:1px solid #607286;color:white;font-size:16px}button{width:100%;padding:14px;border:0;border-radius:10px;background:#ffab57;color:#19140e;font-size:16px;font-weight:800;margin-top:16px;cursor:pointer}.error{color:#ffb4a2}small{display:block;color:#91a5b5;margin-top:18px;line-height:1.5}</style></head><body><main><header>⚒ SMED / NETTVAKT</header><h1>Kontrollpanel</h1><p>Logg inn med <b>SMED_AGENT_TOKEN</b> fra Render. Nøkkelen sendes kryptert over HTTPS. Nettvakt på MacBooken fortsetter å kjøre uten nettleseren.</p>' + error + '<form method="post" action="/nettvakt/login"><label for="password">Agentnøkkel</label><input id="password" name="password" type="password" required autocomplete="off" autofocus maxlength="512"><button type="submit">Åpne kontrollpanelet</button></form><small>Ingen ny konto. Innloggingen varer i 24 timer i denne nettleseren. Ikke del nøkkelen i ChatGPT.</small></main></body></html>';
+  return '<!doctype html><html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101923"><title>SMED-01 · Innlogging</title><style>*{box-sizing:border-box}body{font:16px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#0b111a;color:#f4f7fb;min-height:100vh;margin:0;display:grid;place-items:center;padding:18px}main{max-width:440px;width:100%;border:1px solid #304354;border-radius:20px;background:#17222e;padding:28px}header{color:#ffad59;font-weight:850;letter-spacing:.13em;font-size:14px}h1{margin:15px 0;font-size:30px}p{line-height:1.55;color:#b8c8d3}label{display:block;margin:22px 0 8px;font-weight:650}input{width:100%;padding:14px;border-radius:10px;background:#0b1520;border:1px solid #607286;color:white;font-size:16px}button{width:100%;padding:14px;border:0;border-radius:10px;background:#ffab57;color:#19140e;font-size:16px;font-weight:800;margin-top:16px;cursor:pointer}.error{color:#ffb4a2}small{display:block;color:#91a5b5;margin-top:18px;line-height:1.5}</style></head><body><main><header>⚒ SMED / NETTVAKT</header><h1>Kontrollpanel</h1><p>Logg inn med <b>SMED_AGENT_TOKEN</b> fra Render. Nøkkelen sendes kryptert over HTTPS. Nettvakt på MacBooken fortsetter å kjøre uten nettleseren.</p>' + error + '<form method="post" action="/nettvakt/login"><input type="hidden" name="csrf" value="' + formChallenge(token) + '"><label for="password">Agentnøkkel</label><input id="password" name="password" type="password" required autocomplete="off" autofocus maxlength="512"><button type="submit">Åpne kontrollpanelet</button></form><small>Ingen ny konto. Innloggingen varer i 24 timer i denne nettleseren. Ikke del nøkkelen i ChatGPT.</small></main></body></html>';
 }
 
 async function readForm(req) {
@@ -68,13 +86,14 @@ async function readForm(req) {
     parts.push(chunk);
   }
   const form = new URLSearchParams(Buffer.concat(parts).toString('utf8'));
-  return form.get('password') || '';
+  return { password: form.get('password') || '', csrf: form.get('csrf') || '' };
 }
 
 function sameOrigin(req) {
+  // Origin: null is emitted by some privacy-preserving/in-app iOS navigations.
   const origin = req.headers.origin || '';
   const host = req.headers.host || '';
-  return !origin || (origin === 'https://' + host);
+  return !origin || origin === 'null' || origin === 'https://' + host;
 }
 
 function attemptsAllowed() {
@@ -97,24 +116,26 @@ export function createNetVaktDashboard(agentToken, netwatch) {
 
   async function handleHttp(req, res, path) {
     if (path === '/nettvakt/login' && req.method === 'POST') {
-      if (!sameOrigin(req)) return send(res, 403, 'Ugyldig opprinnelse', 'text/plain; charset=utf-8');
       if (!attemptsAllowed()) return send(res, 429, 'For mange innloggingsforsøk. Prøv senere.', 'text/plain; charset=utf-8');
       try {
-        const password = await readForm(req);
+        const form = await readForm(req);
+        // A fresh, signed token enforces same-site intent without trusting browser Origin headers.
+        if (!form || !validChallenge(form.csrf, agentToken))
+          return send(res, 403, loginPage(agentToken, false));
         recordAttempt();
-        if (password !== null && safeEqual(password, agentToken)) {
+        if (safeEqual(form.password, agentToken)) {
           return send(res, 303, '', 'text/plain; charset=utf-8', {
             'Location': '/nettvakt/dashboard',
             'Set-Cookie': makeCookie(agentToken),
           });
         }
-        return send(res, 401, loginPage(true));
+        return send(res, 401, loginPage(agentToken, true));
       } catch {
         return send(res, 400, 'Ugyldig forespørsel', 'text/plain; charset=utf-8');
       }
     }
     if (path === '/nettvakt/dashboard' && req.method === 'GET') {
-      if (!authorized(req, agentToken)) return send(res, 200, loginPage());
+      if (!authorized(req, agentToken)) return send(res, 200, loginPage(agentToken));
       const html = await readFile(new URL('./nettvakt-dashboard.html', import.meta.url), 'utf8');
       return send(res, 200, html);
     }

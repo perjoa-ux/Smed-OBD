@@ -119,7 +119,7 @@
     if (!events.length) addItem(eventList, 'Ingen endringer registrert', 'Hendelser vises ved endring i DNS-, gateway- eller internettilstand.', 'muted');
     for (const event of events.slice(0, 30)) {
       const date = new Date(event.at);
-      addItem(eventList, event.message || 'Nettverkshendelse', Number.isNaN(date.getTime()) ? '' : date.toLocaleString('nb-NO'), event.kind === 'warning' ? 'warn' : 'good');
+      addItem(eventList, event.message || 'Nettverkshendelse', Number.isNaN(date.getTime()) ? '' : date.toLocaleString('nb-NO'), event.kind === 'warning' ? 'warn' : event.kind === 'recovery' ? 'good' : 'muted');
     }
 
     const list = $('devices');
@@ -168,6 +168,41 @@
       }
       tr.append(nameCell, ip, mac, observed);
       list.append(tr);
+    }
+
+    // Remembered devices do not imply an online status; only recent observations do.
+    const inventory = Array.isArray(input.inventory) ? input.inventory : [];
+    put('inventory-count', inventory.length + ' tidligere oppdagede enheter · opptil 7 dager');
+    const history = $('inventory');
+    history.replaceChildren();
+    if (!inventory.length) {
+      const tr = document.createElement('tr'), td = document.createElement('td');
+      td.colSpan = 4;
+      td.textContent = 'Ingen historikk ennå. Nye enheter registreres etter hvert.';
+      tr.append(td); history.append(tr);
+    }
+    const localTime = value => {
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('nb-NO', {dateStyle:'short',timeStyle:'short'});
+    };
+    for (const device of inventory.slice(0,512)) {
+      const tr = document.createElement('tr');
+      const name = document.createElement('td');
+      const strong = document.createElement('strong');
+      strong.textContent = aliases[deviceKey(device)] || device.name || device.ip || 'Ukjent';
+      const address = document.createElement('span');
+      address.textContent = device.ip || '—';
+      name.append(strong, address);
+      const first = document.createElement('td');
+      first.textContent = localTime(device.first_seen);
+      const last = document.createElement('td');
+      last.textContent = localTime(device.last_seen);
+      const presence = document.createElement('td');
+      const current = online && device.currently_observed === true;
+      presence.textContent = current ? 'Observert i siste rapport' : 'Ikke observert nå';
+      presence.className = current ? 'good' : 'muted';
+      tr.append(name,first,last,presence);
+      history.append(tr);
     }
   }
 

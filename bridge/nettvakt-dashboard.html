@@ -30,6 +30,9 @@
     .device-table th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}.device-table tr:last-child td{border-bottom:none}
     .device-table td span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
     .note{font-size:12px;line-height:1.6;color:#a9bac8;margin-top:13px}
+    .alias-button{margin-top:5px;display:block;border:1px solid #51657a;border-radius:7px;background:#213448;color:#ffe0b8;padding:5px 8px;font-size:11px;font-weight:700}
+    .alias-button:hover{background:#2e4760}.device-name{font-weight:750;overflow-wrap:anywhere}
+    .log-list{display:grid;gap:8px;padding:0;margin:0;list-style:none}.log-list li{padding:10px 12px;border-radius:10px;background:#101e2a;border:1px solid #304354;font-size:13px;line-height:1.5}.log-list li time{display:block;font-size:11px;color:var(--muted);margin-top:4px}
     footer{margin-top:26px;color:#8298a9;font-size:11px;line-height:1.6}
     @media(max-width:810px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}}
     @media(max-width:450px){.wrap{padding:18px 12px 40px}.panel{padding:15px}.grid{gap:10px}.hero{padding-top:32px}.brand h1{font-size:16px}.actions .btn{padding:8px 10px}.panel .value{font-size:25px}}
@@ -80,12 +83,14 @@
       </section>
       <section class="panel" aria-label="Varsler"><ul class="list" id="alerts"><li class="muted">Leser varsler …</li></ul></section>
     </div>
+    <div class="section-head"><h3>Hendelser</h3><p>Feil og gjenoppretting fra de siste rapportene</p></div>
+    <section class="panel"><ol id="events" class="log-list"><li>Laster hendelser …</li></ol><p class="note">Hendelsesloggen lagres midlertidig på serveren og nullstilles ved omstart. Dette er ikke pushvarsler til iPhone.</p></section>
     <div class="section-head"><h3>Enheter på nettverket</h3><p id="devices-heading">Registrert av MacBooken</p></div>
     <section class="panel">
       <div class="table-wrap">
-        <table class="device-table"><thead><tr><th>IP-adresse</th><th>MAC-adresse</th><th>Observasjon</th></tr></thead><tbody id="devices"><tr><td colspan="3">Laster …</td></tr></tbody></table>
+        <table class="device-table"><thead><tr><th>Enhet</th><th>IP-adresse</th><th>MAC-adresse</th><th>Observasjon</th></tr></thead><tbody id="devices"><tr><td colspan="4">Laster …</td></tr></tbody></table>
       </div>
-      <p class="note">Merk: Listen bygger på MacBookens ARP-tabell, ikke en fullstendig skanning. En enhet som mangler i listen, er ikke nødvendigvis offline. Status oppdateres automatisk cirka hvert 30. sekund.</p>
+      <p class="note">Merk: Listen bygger på MacBookens ARP-tabell, ikke en fullstendig skanning. En enhet som mangler i listen, er ikke nødvendigvis offline. Trykk «Navngi» for å lagre et eget navn på enheten på denne telefonen/nettleseren. Status oppdateres automatisk cirka hvert 30. sekund.</p>
     </section>
     <footer>SMED NETTVAKT · Utgående kryptert forbindelse fra MacBook til Render · Ingen ruterkonfigurasjon eller enhetsstyring · Data vises kun etter innlogging.</footer>
   </main>

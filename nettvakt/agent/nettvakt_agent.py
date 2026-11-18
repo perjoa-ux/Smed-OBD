@@ -16,6 +16,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from smed_health import collect_mac_health, mac_alerts
 
 HOME = Path.home() / ".config" / "smed-nettvakt"
 DEFAULT = {
@@ -144,12 +145,15 @@ def collect(cfg):
         if d["ip"] in targets and d["state"] == "offline":
             alerts.append({"severity": "warning", "code": "TARGET_UNREACHABLE", "message": d["ip"] + " svarte ikke på ping"})
     smartlife, smartlife_source = homeassistant(cfg)
+    mac_health = collect_mac_health()
+    alerts.extend(mac_alerts(mac_health))
     return {
         "host": socket.gethostname(), "gateway": gateway,
         "interface": interface, "devices": devices[:256],
         "checks": {"gateway_ms": gateway_ms, "dns_ok": dns_ok, "internet_ok": internet_ok},
         "alerts": alerts[:100], "smartlife": smartlife,
         "smartlife_source": smartlife_source,
+        "mac_health": mac_health,
     }
 
 

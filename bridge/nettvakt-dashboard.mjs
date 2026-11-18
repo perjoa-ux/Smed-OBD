@@ -150,10 +150,12 @@ export function createNetVaktDashboard(agentToken, netwatch) {
       const mac = netwatch.handleTool('nettvakt_mac_health', {});
       const devices = netwatch.handleTool('nettvakt_devices', {});
       const alerts = netwatch.handleTool('nettvakt_alerts', {});
+      const inventory = netwatch.handleTool('nettvakt_inventory', {});
       return send(res, 200, JSON.stringify({
         status,
         mac_health: mac.mac_health,
         devices: devices.devices,
+        inventory: inventory.inventory || [],
         alerts: alerts.alerts,
         events: alerts.events || [],
         smartlife: alerts.smartlife,

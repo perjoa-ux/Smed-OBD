@@ -1,27 +1,21 @@
-# Smed Nettvakt – status (17.11.2026)
+# Smed Nettvakt / SMED-01 – 0.2.0
 
-## Mål
-Drifte ett samlet, sikkerhetsbegrenset overblikk over Googles Nest WiFi, lokalnettet og valgte SmartLife/Tuya-enheter med ChatGPT som grensesnitt. Ingen abonnementer eller nye maskinkjøp.
+Mål: Lokal, gratis og sikker overvåking av Google Nest-nettverket og MacBook Pro 2012, der ChatGPT kan hente faktiske målinger.
 
-## Teknologi
-- Eksisterende Render/Node-bro og eksisterende MCP-OAuth (ingen ekstra tjeneste eller kostnad)
-- Lokal macOS-agent i Python 3 uten eksterne Python-avhengigheter
-- TLS/HTTPS og egen avledet agentnøkkel (HMAC-SHA256 fra SMED_AGENT_TOKEN)
-- Valgfri Home Assistant Tuya-integrasjon for SmartLife-tilstander
+- [FERDIG] macOS Catalina installert og oppdatert til 10.15.8 (bekreftet av brukeren)
+- [FERDIG] SMED-01 strømstyring for ikke-dvale ved tilkoblet strøm
+- [FERDIG] Lokal sensor: ARP, gateway, DNS, HTTPS og mål-ping
+- [FERDIG] Lokal helsesensor: CPU-load, RAM, diskplass/S.M.A.R.T., batteri, oppetid
+- [FERDIG] Private ChatGPT-plugin Smed Nettvakt 0.2.0
+- [FERDIG] Render/MCP-server med mac_health lesetilgang; deploy live 2026-11-18
+- [FERDIG] 4 Node-tester og 3 Python-tester lokalt
+- [FERDIG] ZIP-installasjonspakke 0.2.0
+- [GJENSTÅR] Lokal installasjon av Python 3 (hvis mangler) og Smed Nettvakt på SMED-01
+- [GJENSTÅR] Første faktiske agentrapport til Render
+- [GJENSTÅR] Verifisere ChatGPT-pluginens verktøygodkjenning mot innkommende sensorverdier
+- [GJENSTÅR] SmartLife via Home Assistant/Tuya
+- [GJENSTÅR] Temperaturmåling via verifisert lokal sensor dersom mulig
 
-## Filstatus
-- [FERDIG] bridge/nettvakt.mjs – sensor-API, tilgangskontroll, status, MCP-verktøy, ufarlige prober
-- [FERDIG] bridge/server.mjs – isolert registrering av nye ruter og MCP-verktøy; OBD-logikk uendret
-- [FERDIG] nettvakt/agent/nettvakt_agent.py – ARP-inventar, ping, DNS/HTTPS, valgt Home Assistant-data
-- [FERDIG] nettvakt/agent/install-macos.sh – launchd-autostart og sikker nøkkellagring
-- [FERDIG] nettvakt/agent/uninstall-macos.sh – stopp agent
-- [FERDIG] nettvakt/INSTALL.md – installasjon og begrensninger
-- [FERDIG] Privat ChatGPT-plugin Smed Nettvakt v0.1.0 (opprettet separat)
-- [TESTET] Node-modul: 3 tester bestått, V8 syntaks for integrert server bestått
-- [GJENSTÅR] MacBook-installasjon på samme Nest-nettverk
-- [GJENSTÅR] Første ekte sensorrapport og validering av faktiske enheter
-- [GJENSTÅR] Koble Home Assistant/Tuya slik at SmartLife-tilstander kan leses
-- [GJENSTÅR] Verifisere ChatGPT-pluginens OAuth-oppsett etter installasjon
+Batteriet er 1 %, lader ikke og har «Service anbefales». Kontroller batteriet fysisk før uovervåket 24/7-drift. Mac trenger strømforsyning, har ikke batteribackup ved strømbrudd.
 
-## Viktig avgrensning
-Dette gir ikke direkte administrasjon av Google Nest (WiFi-kanal, SSID, meshstyring, klientblokkering). Dette krever fortsatt Google Home og eventuelle offisielle API-er som måtte bli tilgjengelige. Ingen automatiske skriveroperasjoner mot rutere eller SmartLife-enheter.
+Ingen direkte administrasjon av Google Nest-rutere eller automatisk omstart av enheter er aktivert.

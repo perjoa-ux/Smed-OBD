@@ -24,9 +24,10 @@ Mål: Lokal, gratis og privat overvåking av SMED-01 og hjemmenettverket via Mac
 - [GJENSTÅR] Eventuell separat sikker rotasjon av SMED_AGENT_TOKEN som tidligere ble eksponert i chat.
 - [FERDIG] Egen ChatGPT-automatisering «SMED-01 nettvaktalarm» kontrollere offentlig /nettvakt/health hver time og varsle ved vedvarende agentbortfall.
 - [UNDER ARBEID] Catalina-RAM: Dashboard viser kjent installert RAM når ledig minne er ukjent. For mer presis andel er vm_stat-reserveberegning lagt i nettvakt/agent/smed_health.py; den lokale filen på MacBooken er ikke oppdatert ennå.
-- [UNDER ARBEID] Fullere enhetsoversikt: bridge/nettvakt.mjs husker enheter i opptil sju dager, med første/siste observasjon og nye enhet-hendelser. Privat dashboard har egen oversikt over historikk. Koden er lagt i GitHub men ny Render-utrulling er ennå ikke bekreftet.
-- [UNDER ARBEID] Lokal agent har skånsom ICMP/ARP-sveip av opptil 20 adresser per rapport innenfor sitt private /24 (4 parallelle pinger). Agent-koden er lagt i GitHub, men ikke installert på SMED-01. Ingen portskanning. Ingen falske offlinekonklusjoner ved manglende svar.
-- [FERDIG] Testkode/CI for Python lokalnettoppdagelse er lagt til i GitHub, men testkjøring er ennå ikke verifisert.
+- [FERDIG] Enhetsoversikt: privat dashboard og API husker observerte enheter i opptil sju dager med første/siste observasjon, nytt-enhet hendelser og «ikke observert nå». Render deploy dep-dbukvm08v5cc739ebdag bekreftet live og 14/14 Node-tester bestått på Render 18.11.2026.
+- [UNDER ARBEID] Lokal agent kan gjøre skånsom ICMP/ARP-oppdagelse av opptil 20 adresser per rapport innenfor sitt private /24 (4 parallelle pinger). Nett 192.168.86.0/24, gateway 192.168.86.1 og DHCP 192.168.86.20–250 bekreftet fra Google Home-skjermbilder. Den lokale agenten på MacBooken er ennå ikke oppdatert. Ingen portskanning eller endring i routeren. Oppdateringsscript nettvakt/agent/update-macos.sh bruker pin'et kildekode, unit-tester, backup og bevarer config/token.
+- [FERDIG] Python lokalnettoppdagelse: testkode i GitHub og verifisering ved Mac-oppdatering. Python-testkjøring på faktisk Mac er ennå ikke bekreftet.
+- [FERDIG] Render byggetesten kjører Node.js-syntaks og 14 autentiserings-, hendelses- og historikk-tester; alle bestått i deploy-loggen.
 - [GJENSTÅR] Google Home Wi-Fi → Enheter må sammenlignes manuelt for ruterdrevne klientlister; direktegrensesnitt fra Nest er ikke tilgjengelig.
 - [GJENSTÅR] Direkte ChatGPT-verktøytilgang til private enhetsdata er ikke verifisert; kontrollpanelet er tilgjengelig med innlogging.
 - [GJENSTÅR] SmartLife via Home Assistant/Tuya og eventuell kompatibel Mac-temperatursensor.

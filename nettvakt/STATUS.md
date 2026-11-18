@@ -24,6 +24,11 @@ Mål: Lokal, gratis og privat overvåking av SMED-01 og hjemmenettverket via Mac
 - [GJENSTÅR] Eventuell separat sikker rotasjon av SMED_AGENT_TOKEN som tidligere ble eksponert i chat.
 - [FERDIG] Egen ChatGPT-automatisering «SMED-01 nettvaktalarm» kontrollere offentlig /nettvakt/health hver time og varsle ved vedvarende agentbortfall.
 - [UNDER ARBEID] Catalina-RAM: Dashboard viser kjent installert RAM når ledig minne er ukjent. For mer presis andel er vm_stat-reserveberegning lagt i nettvakt/agent/smed_health.py; den lokale filen på MacBooken er ikke oppdatert ennå.
+- [UNDER ARBEID] Fullere enhetsoversikt: bridge/nettvakt.mjs husker enheter i opptil sju dager, med første/siste observasjon og nye enhet-hendelser. Privat dashboard har egen oversikt over historikk. Koden er lagt i GitHub men ny Render-utrulling er ennå ikke bekreftet.
+- [UNDER ARBEID] Lokal agent har skånsom ICMP/ARP-sveip av opptil 20 adresser per rapport innenfor sitt private /24 (4 parallelle pinger). Agent-koden er lagt i GitHub, men ikke installert på SMED-01. Ingen portskanning. Ingen falske offlinekonklusjoner ved manglende svar.
+- [FERDIG] Testkode/CI for Python lokalnettoppdagelse er lagt til i GitHub, men testkjøring er ennå ikke verifisert.
+- [GJENSTÅR] Google Home Wi-Fi → Enheter må sammenlignes manuelt for ruterdrevne klientlister; direktegrensesnitt fra Nest er ikke tilgjengelig.
+- [GJENSTÅR] Direkte ChatGPT-verktøytilgang til private enhetsdata er ikke verifisert; kontrollpanelet er tilgjengelig med innlogging.
 - [GJENSTÅR] SmartLife via Home Assistant/Tuya og eventuell kompatibel Mac-temperatursensor.
 
 ## Kontrollpanel

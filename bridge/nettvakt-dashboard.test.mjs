@@ -102,7 +102,7 @@ test('cross-site login is rejected', async () => {
   let status = 0;
   res.writeHead = code => {status = code;};
   const pending = app.handleHttp(req,res,'/nettvakt/login');
-  req.end(await loginBody());
+  req.end('password=' + agentToken);
   await pending;
   assert.equal(status,403);
 });

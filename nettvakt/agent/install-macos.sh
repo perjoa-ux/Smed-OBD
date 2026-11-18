@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
-if ! command -v python3 >/dev/null 2>&1; then
+if [ -x /Library/Frameworks/Python.framework/Versions/Current/bin/python3 ]; then
+  PYTHON=/Library/Frameworks/Python.framework/Versions/Current/bin/python3
+elif command -v python3 >/dev/null 2>&1 && python3 -c "import ssl,plistlib" >/dev/null 2>&1; then
+  PYTHON=$(command -v python3)
+else
   echo 'Python 3 mangler. Installer gratis Python 3 fra python.org først.' >&2
   exit 1
 fi
@@ -10,6 +14,8 @@ BIN="$DIR/nettvakt_agent.py"
 PLIST="$HOME/Library/LaunchAgents/no.smed.nettvakt.plist"
 mkdir -p "$DIR" "$HOME/Library/LaunchAgents"
 cp "$HERE/nettvakt_agent.py" "$BIN"
+cp "$HERE/smed_health.py" "$DIR/smed_health.py"
+chmod 600 "$DIR/smed_health.py"
 chmod 700 "$DIR"; chmod 700 "$BIN"
 if [ ! -e "$DIR/config.json" ]; then
   cat > "$DIR/config.json" <<'JSON'
@@ -26,7 +32,7 @@ JSON
 fi
 if [ ! -e "$DIR/agent.token" ]; then
   echo 'Lim inn SMED_AGENT_TOKEN fra Render (vises ikke på skjermen):'
-  python3 - "$DIR/agent.token" <<'PY'
+  "$PYTHON" - "$DIR/agent.token" <<'PY'
 import getpass,hmac,hashlib,pathlib,os,sys
 raw=getpass.getpass('Agentnøkkel: ')
 if len(raw)<24: raise SystemExit('Nøkkelen er for kort')
@@ -35,7 +41,6 @@ p=pathlib.Path(sys.argv[1]);p.write_text(secret+'\n');os.chmod(p,0o600)
 print('Avledet Nettvakt-nøkkel lagret. OBD-originalen ble ikke lagret.')
 PY
 fi
-PYTHON=$(command -v python3)
 cat > "$PLIST" <<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

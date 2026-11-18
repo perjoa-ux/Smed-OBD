@@ -49,6 +49,29 @@ export function createNetVakt(agentToken) {
     message: safeString(a?.message, 250),
   });
   const cleanState = s => ({entity_id: safeString(s?.entity_id, 120), state: safeString(s?.state, 80), friendly_name: safeString(s?.friendly_name, 120)});
+
+  const safeNum = (value, min, max) => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max ? value : null;
+  const safeBool = value => typeof value === 'boolean' ? value : null;
+  const cleanMacHealth = h => h && typeof h === 'object' && !Array.isArray(h) ? ({
+    os_name: safeString(h.os_name, 40),
+    os_version: safeString(h.os_version, 40),
+    cpu_logical_cores: safeNum(h.cpu_logical_cores, 1, 256),
+    cpu_load_1m: safeNum(h.cpu_load_1m, 0, 1000),
+    memory_total_mb: safeNum(h.memory_total_mb, 1, 1000000),
+    memory_free_percent: safeNum(h.memory_free_percent, 0, 100),
+    disk_total_gb: safeNum(h.disk_total_gb, 0, 100000),
+    disk_free_gb: safeNum(h.disk_free_gb, 0, 100000),
+    disk_free_percent: safeNum(h.disk_free_percent, 0, 100),
+    disk_smart_status: safeString(h.disk_smart_status, 40),
+    uptime_seconds: safeNum(h.uptime_seconds, 0, 315360000),
+    temperature_c: safeNum(h.temperature_c, -30, 130),
+    battery_percent: safeNum(h.battery_percent, 0, 100),
+    battery_is_charging: safeBool(h.battery_is_charging),
+    battery_ac_power: safeBool(h.battery_ac_power),
+    battery_health_status: safeString(h.battery_health_status, 60),
+    battery_voltage_mv: safeNum(h.battery_voltage_mv, 0, 30000),
+  }) : null;
+
   function status() {
     if (!report) return { configured: true, agent_online: false, state: 'awaiting_first_report', message: 'Installer lokal sensor på Mac i Nest-nettverket.' };
     const age = Math.floor((Date.now() - receivedAt) / 1000);
@@ -64,6 +87,7 @@ export function createNetVakt(agentToken) {
       alert_count: report.alerts.length,
       smartlife_count: report.smartlife.length,
       smartlife_source: report.smartlife_source,
+      mac_health_available: report.mac_health !== null,
     };
   }
   function expire() {
@@ -96,6 +120,7 @@ export function createNetVakt(agentToken) {
           alerts: data.alerts.map(cleanAlert),
           smartlife: Array.isArray(data.smartlife) ? data.smartlife.map(cleanState) : [],
           smartlife_source: safeString(data.smartlife_source, 40) || 'not_connected',
+          mac_health: cleanMacHealth(data.mac_health),
         };
         receivedAt = Date.now();
         return send(res, 200, { ok: true, devices: report.devices.length, received_at: new Date(receivedAt).toISOString() });
@@ -121,6 +146,7 @@ export function createNetVakt(agentToken) {
   }
   const tools = [
     { name: 'nettvakt_status', description: 'Read live local-network health via the Mac sensor. Never claim data is live when the sensor is stale.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
+    { name: 'nettvakt_mac_health', description: 'Read latest Mac CPU load, memory, disk SMART/space, uptime and battery from SMED-01. Requires online sensor; missing temperatures are not measured.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'nettvakt_devices', description: 'Read the latest observed local IP/MAC device inventory. A device missing from ARP does not prove it is offline.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'nettvakt_alerts', description: 'Read gateway/DNS/internet alerts and optional Home Assistant SmartLife/Tuya device states.', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'nettvakt_probe', description: 'Request a SAFE local ping or refreshed status from the Mac sensor. No device configuration or power changes.', annotations: { readOnlyHint: false }, inputSchema: { type: 'object', properties: { kind: { type: 'string', enum: ['ping', 'refresh'] }, ip: { type: 'string', description: 'Existing inventory IPv4 for ping; omit for refresh.' } }, required: ['kind'], additionalProperties: false } },
@@ -129,6 +155,7 @@ export function createNetVakt(agentToken) {
   function handleTool(name, args) {
     expire();
     if (name === 'nettvakt_status') return status();
+    if (name === 'nettvakt_mac_health') return { ...status(), mac_health: report?.mac_health || null };
     if (name === 'nettvakt_devices') return { ...status(), devices: report?.devices || [] };
     if (name === 'nettvakt_alerts') return { ...status(), alerts: report?.alerts || [], smartlife: report?.smartlife || [] };
     if (name === 'nettvakt_probe') {

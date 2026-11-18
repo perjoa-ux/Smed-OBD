@@ -61,3 +61,21 @@ test('Mac health telemetry is sanitized and retrievable', async () => {
   assert.equal(health.mac_health.disk_smart_status,'Verified');
   assert.equal(health.mac_health.serial,undefined);
 });
+
+
+test('retains bounded network failure and recovery history', async () => {
+  const app = createNetVakt(root);
+  const base = {host:'SMED-01',gateway:'192.168.86.1',devices:[],alerts:[],smartlife:[]};
+  const send = checks => call(app, '/nettvakt/report', 'POST', {...base,checks});
+  assert.equal((await send({gateway_ms:2,dns_ok:true,internet_ok:true})).status,200);
+  assert.equal(app.handleTool('nettvakt_alerts',{}).events.length,0);
+  assert.equal((await send({gateway_ms:null,dns_ok:false,internet_ok:false})).status,200);
+  const fail = app.handleTool('nettvakt_alerts',{}).events;
+  assert.equal(fail.length,3);
+  assert.ok(fail.every(event => event.kind === 'warning'));
+  assert.equal((await send({gateway_ms:2,dns_ok:true,internet_ok:true})).status,200);
+  const recovery = app.handleTool('nettvakt_alerts',{}).events;
+  assert.equal(recovery.length,6);
+  assert.equal(recovery[0].kind,'recovery');
+  assert.equal(app.handleTool('nettvakt_status',{}).report_sequence,3);
+});

@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check server.mjs"
+    "check": "node --check server.mjs && node --check nettvakt.mjs && node --check nettvakt-dashboard.mjs && node --check nettvakt-dashboard.js",
+    "test": "node --test nettvakt.test.mjs nettvakt-dashboard.test.mjs",
+    "postinstall": "npm run check && npm run test"
   },
-  "engines": {"node": ">=20"}
+  "engines": {
+    "node": ">=20"
+  }
 }

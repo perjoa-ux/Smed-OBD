@@ -6,6 +6,8 @@ No external dependencies, device writes, router changes or open ports.
 """
 import argparse
 import json
+import ipaddress
+from concurrent.futures import ThreadPoolExecutor
 import os
 import platform
 import re
@@ -19,10 +21,12 @@ from pathlib import Path
 from smed_health import collect_mac_health, mac_alerts
 
 HOME = Path.home() / ".config" / "smed-nettvakt"
+_SCAN_CURSOR = 0  # Bounded, read-only /24 discovery; resets after agent restart.
 DEFAULT = {
     "bridge_url": "https://smed-obd-i2kp.onrender.com",
     "interval_seconds": 60,
     "target_ips": [],
+    "lan_discovery_enabled": True,
     "ha_url": "",
     "ha_token_file": "",
     "ha_entities": [],
@@ -77,6 +81,41 @@ def ping(ip):
     return round(float(value.group(1)), 2) if value else None
 
 
+def discover_lan(gateway, interface, enabled=True):
+    """Gently ping up to 20 addresses in our own private /24 each report.
+
+    This warms the local ARP cache and records positive ICMP replies; a failed
+    ping never labels an unconfigured device offline. No ports are scanned.
+    This is not a substitute for the Nest router's authenticated client list.
+    """
+    global _SCAN_CURSOR
+    if not enabled or not gateway or not re.fullmatch(r"en\\d+", interface or ""):
+        return []
+    local = run("ipconfig", "getifaddr", interface, timeout=3).strip()
+    try:
+        address = ipaddress.IPv4Address(local)
+        router = ipaddress.IPv4Address(gateway)
+        if not address.is_private or not router.is_private:
+            return []
+        network = ipaddress.IPv4Network(str(address) + "/24", strict=False)
+        if router not in network:
+            return []
+        hosts = [str(ip) for ip in network.hosts() if ip not in (address, router)]
+    except (ipaddress.AddressValueError, ValueError):
+        return []
+    if not hosts:
+        return []
+    count = min(20, len(hosts))
+    batch = [hosts[(_SCAN_CURSOR + idx) % len(hosts)] for idx in range(count)]
+    _SCAN_CURSOR = (_SCAN_CURSOR + count) % len(hosts)
+    # Keep simultaneous ICMP probes low for older Macs and consumer routers.
+    with ThreadPoolExecutor(max_workers=4) as workers:
+        latencies = list(workers.map(ping, batch))
+    return [{"ip": ip, "mac": "", "name": "", "state": "online",
+             "source": "icmp", "latency_ms": latency}
+            for ip, latency in zip(batch, latencies) if latency is not None]
+
+
 def request(url, token, method="GET", payload=None, timeout=8):
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8") if payload is not None else None
     headers = {"Authorization": "Bearer " + token, "Accept": "application/json"}
@@ -107,8 +146,20 @@ def homeassistant(cfg):
 
 def collect(cfg):
     gateway, interface = route_info()
+    positive = discover_lan(gateway, interface, cfg.get("lan_discovery_enabled", True))
+    # Re-read ARP after probing because fresh neighbors have now replied.
     devices = arp_inventory()
     known = {d["ip"] for d in devices}
+    for entry in positive:
+        if entry["ip"] not in known:
+            devices.append(entry)
+            known.add(entry["ip"])
+        else:
+            for device in devices:
+                if device["ip"] == entry["ip"]:
+                    device["state"] = "online"
+                    device["latency_ms"] = entry["latency_ms"]
+                    break
     targets = [ip for ip in cfg.get("target_ips", []) if ipv4(ip)][:32]
     for ip in targets:
         if ip not in known:

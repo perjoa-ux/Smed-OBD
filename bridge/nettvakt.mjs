@@ -185,6 +185,7 @@ export function createNetVakt(agentToken) {
             addChange(report.checks.gateway_ms !== null ? 'recovery' : 'warning', report.checks.gateway_ms !== null ? 'Ruteren svarer på ping igjen' : 'Ruteren svarte ikke på ping');
         }
         receivedAt = Date.now();
+        console.log('SMED_NETTVAKT_HEARTBEAT '+JSON.stringify({agent_online:true,received_at:new Date(receivedAt).toISOString(),report_sequence:reportSequence}));
         return send(res, 200, { ok: true, devices: report.devices.length, received_at: new Date(receivedAt).toISOString() });
       }
       if (path === '/nettvakt/next' && req.method === 'GET') {

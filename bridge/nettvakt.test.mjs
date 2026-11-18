@@ -47,3 +47,17 @@ test('reject invalid reports or unsafe commands', async () => {
   assert.equal((await call(app,'/nettvakt/report','POST',{devices:[],alerts:[],smartlife:Array(257).fill({})})).status,400);
   assert.ok(app.handleTool('nettvakt_probe',{kind:'restart_router'}).error);
 });
+
+test('Mac health telemetry is sanitized and retrievable', async () => {
+  const app=createNetVakt(root);
+  const report={devices:[],alerts:[],smartlife:[],
+    mac_health:{os_name:'Darwin',os_version:'10.15.8',cpu_load_1m:0.5,
+      cpu_logical_cores:4,battery_percent:1,battery_is_charging:false,
+      disk_smart_status:'Verified',serial:'hidden'}};
+  assert.equal((await call(app,'/nettvakt/report','POST',report)).status,200);
+  const health=app.handleTool('nettvakt_mac_health',{});
+  assert.equal(health.agent_online,true);
+  assert.equal(health.mac_health.battery_percent,1);
+  assert.equal(health.mac_health.disk_smart_status,'Verified');
+  assert.equal(health.mac_health.serial,undefined);
+});

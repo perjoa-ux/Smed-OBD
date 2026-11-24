@@ -1,0 +1,23 @@
+name: SmedOBDNative
+options:
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  SmedOBDNative:
+    type: application
+    platform: iOS
+    sources:
+      - path: SmedOBDNative.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: no.smed.obd.native
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Smed OBD
+        NSBluetoothAlwaysUsageDescription: Smed OBD leser motorverdier fra din KDIAG-adapter.
+        UIBackgroundModes:
+          - bluetooth-central
+        UILaunchScreen: {}

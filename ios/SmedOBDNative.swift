@@ -34,6 +34,7 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
     private var bridgeHello = false
 
     func configureBridge(_ token: String) {
+        guard inFlightRemote == nil, !bridgeBusy else { bridgeStatus = "Vent til aktiv forespørsel er ferdig"; return }
         guard bridge.setToken(token) else { bridgeStatus = "Ugyldig kode eller feil ved sikker lagring"; return }
         bridgeGeneration += 1; bridgeBusy = false; bridgeHello = false; remote = nil
         bridgeStatus = "Bro konfigurert"; lastBridgePoll = .distantPast
@@ -81,6 +82,7 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
     override init() {
         super.init()
         running = defaults.bool(forKey: "obd.running")
+        if bridge.configured { bridgeStatus = "Bro konfigurert" }
         if let url = logURL, let data = try? Data(contentsOf: url),
            let history = try? JSONDecoder().decode([Sample].self, from: data) {
             samples = history
@@ -366,5 +368,108 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
                 .navigationTitle("Smed OBD Native")
             }
         }
+    }
+}
+
+final class NativeBridge {
+    struct TaskItem: Decodable {
+        let id: String
+        let command: String
+        let operation: String?
+    }
+    private struct Next: Decodable { let task: TaskItem? }
+    private enum BridgeError: LocalizedError {
+        case missingToken, http(Int), invalidResponse
+        var errorDescription: String? {
+            switch self {
+            case .missingToken: return "Enhetskode mangler"
+            case .http(let n): return "HTTP \(n)"
+            case .invalidResponse: return "Ugyldig svar"
+            }
+        }
+    }
+    private let base = URL(string: "https://smed-obd-i2kp.onrender.com")!
+    private let session: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 8
+        config.timeoutIntervalForResource = 12
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: config)
+    }()
+    private var token: String?
+    private var key: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: "no.smed.obd.bridge",
+         kSecAttrAccount as String: "device-token"]
+    }
+    init() {
+        var query = key
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        if SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+           let data = result as? Data {
+            token = String(data: data, encoding: .utf8)
+        }
+    }
+    var configured: Bool { (token?.count ?? 0) >= 24 }
+    func setToken(_ input: String) -> Bool {
+        let value = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.count >= 24, value.count <= 512, !value.contains(where: { $0.isWhitespace }) else { return false }
+        let attributes: [String: Any] = [
+            kSecValueData as String: Data(value.utf8),
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        var status = SecItemUpdate(key as CFDictionary, attributes as CFDictionary)
+        if status == errSecItemNotFound {
+            var insert = key
+            for (k, v) in attributes { insert[k] = v }
+            status = SecItemAdd(insert as CFDictionary, nil)
+        }
+        guard status == errSecSuccess else { return false }
+        token = value
+        return true
+    }
+    private func request(_ path: String, body: [String: Any]? = nil,
+                         completion: @escaping (Result<Data, Error>) -> Void) {
+        guard let token else { completion(.failure(BridgeError.missingToken)); return }
+        var req = URLRequest(url: base.appendingPathComponent(path))
+        req.setValue("Bearer " + token, forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let body {
+            req.httpMethod = "POST"
+            do { req.httpBody = try JSONSerialization.data(withJSONObject: body) }
+            catch { completion(.failure(error)); return }
+        }
+        session.dataTask(with: req) { data, response, error in
+            let result: Result<Data, Error>
+            if let error { result = .failure(error) }
+            else if let http = response as? HTTPURLResponse {
+                if (200..<300).contains(http.statusCode), let data { result = .success(data) }
+                else { result = .failure(BridgeError.http(http.statusCode)) }
+            } else { result = .failure(BridgeError.invalidResponse) }
+            DispatchQueue.main.async { completion(result) }
+        }.resume()
+    }
+    func poll(hello: Bool, completion: @escaping (Result<TaskItem?, Error>) -> Void) {
+        let next: () -> Void = { [weak self] in
+            guard let self else { return }
+            self.request("device/next") { result in
+                completion(result.flatMap { data in
+                    Result { try JSONDecoder().decode(Next.self, from: data).task }
+                })
+            }
+        }
+        if hello {
+            request("device/hello", body: ["device": "KONNWEI KDIAG", "version": "0.32-native-dev"]) { result in
+                switch result {
+                case .success: next()
+                case .failure(let error): completion(.failure(error))
+                }
+            }
+        } else { next() }
+    }
+    func result(_ task: TaskItem, raw: String, ok: Bool, completion: @escaping (Result<Data, Error>) -> Void) {
+        request("device/result", body: ["id": task.id, "ok": ok, "response": raw], completion: completion)
     }
 }

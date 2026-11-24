@@ -1,6 +1,1 @@
-{
-  "version": 1,
-  "id": "smed-live-rpm-20261124-0821",
-  "command": "010C",
-  "expires_at": "2026-11-24T08:33:00Z"
-}
+{"version":1,"id":"smed-live-coolant-20261124-0827","command":"0105","expires_at":"2026-11-24T08:39:00Z"}

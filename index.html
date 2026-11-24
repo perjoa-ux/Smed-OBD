@@ -1,4 +1,4 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smed OBD v0.30</title><style>:root{color-scheme:dark}body{font:16px system-ui;background:#081527;color:#edf5ff;padding:16px;margin:0}main{max-width:780px;margin:auto}section{background:#17283e;border:1px solid #37516e;border-radius:16px;padding:16px;margin:12px 0}button,input,select{font:inherit;padding:12px;border:1px solid #56789e;border-radius:9px;color:#fff;background:#203852;margin:3px;max-width:100%}button{cursor:pointer}button.primary{background:#1268ad}button.danger{background:#84393b}button:disabled{opacity:.45}input{box-sizing:border-box;width:100%}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:#081527;padding:12px;border-radius:8px;max-height:330px;overflow:auto}.muted{color:#b6c6da}#status{font-weight:700}.warn{color:#ffd59a}label{display:block;margin-top:10px}code{color:#a7ddff}</style></head><body><main><h1>🔧 Smed OBD v0.30</h1><p class="muted">KONNWEI KDIAG • Ekte ECU-data • Tillatelsesstyrt fjernbro</p><section><h2>1. Bluetooth / KDIAG</h2><p id="status">Frakoblet</p><button class="primary" id="connect">Koble til KONNWEI</button><button id="disconnect">Koble fra</button><button id="init">Initialiser CAN</button><p id="channels" class="muted">Forventet FFF0 / FFF1 (RX) / FFF2 (TX)</p><p id="notifyStatus" class="muted">Varsling til Smed: sender forbindelses- og lesestatus til Render når enhetstoken er registrert.</p><p id="backgroundStatus" class="muted">Bluefy må være aktiv for kontinuerlig ECU-kommunikasjon. Ved retur forsøker appen å gjenopprette forbindelsen.</p><p class="muted">Ingen Vibecode-avhengighet · all ECU-lesing foregår lokalt på iPhone i Bluefy.</p></section><section><h2>2. Diagnostikk</h2><button data-cmd="ATI">Adapter-ID</button><button data-cmd="010C">Turtall</button><button data-cmd="0105">Kjølevæske</button><button data-cmd="0100">Støttede PID</button><button data-cmd="03">Les feilkoder</button><button data-cmd="2115">Mitsubishi 2115 rådata</button><button data-cmd="2117">4N14 oljedata (kandidat)</button><label for="block">4N14 referanseprofil (2016, 1860C97201)</label><select id="block"></select><button id="readBlock">Les valgt blokk</button><p>Verdiene er kandidater på 2011 ECU 1860B61405. Initialiser CAN før avlesning.</p><pre id="oil">Ingen profilavlesning</pre><label>Egendefinert lesekommando (AT/OBD)</label><input id="custom" placeholder="f.eks. 2115"><button id="customSend">Send etter kontroll</button><p class="muted">Lesedata er rådata inntil riktig Mitsubishi-formel er verifisert.</p><h3>Feilkodeoppslag</h3><label for="dtcInput">Skriv inn kode, f.eks. P252F</label><input id="dtcInput" maxlength="5"><button id="dtcLookup">Slå opp</button><pre id="dtcResult">Ingen kode valgt</pre>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smed OBD v0.31</title><style>:root{color-scheme:dark}body{font:16px system-ui;background:#081527;color:#edf5ff;padding:16px;margin:0}main{max-width:780px;margin:auto}section{background:#17283e;border:1px solid #37516e;border-radius:16px;padding:16px;margin:12px 0}button,input,select{font:inherit;padding:12px;border:1px solid #56789e;border-radius:9px;color:#fff;background:#203852;margin:3px;max-width:100%}button{cursor:pointer}button.primary{background:#1268ad}button.danger{background:#84393b}button:disabled{opacity:.45}input{box-sizing:border-box;width:100%}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:#081527;padding:12px;border-radius:8px;max-height:330px;overflow:auto}.muted{color:#b6c6da}#status{font-weight:700}.warn{color:#ffd59a}label{display:block;margin-top:10px}code{color:#a7ddff}</style></head><body><main><h1>🔧 Smed OBD v0.31</h1><p class="muted">KONNWEI KDIAG • Ekte ECU-data • Tillatelsesstyrt fjernbro</p><section><h2>1. Bluetooth / KDIAG</h2><p id="status">Frakoblet</p><button class="primary" id="connect">Koble til KONNWEI</button><button id="disconnect">Koble fra</button><button id="init">Initialiser CAN</button><p id="channels" class="muted">Forventet FFF0 / FFF1 (RX) / FFF2 (TX)</p><p id="notifyStatus" class="muted">Varsling til Smed: sender forbindelses- og lesestatus til Render når enhetstoken er registrert.</p><p id="backgroundStatus" class="muted">Bluefy må være aktiv for kontinuerlig ECU-kommunikasjon. Ved retur forsøker appen å gjenopprette forbindelsen.</p><p class="muted">Ingen Vibecode-avhengighet · all ECU-lesing foregår lokalt på iPhone i Bluefy.</p></section><section id="motorwatch"><h2>Motorvakt – automatisk lesing</h2><p id="watchStatus">Venter på KDIAG.</p><button id="watchToggle" class="primary">Pause motorvakt</button><button id="watchNewTrip">Ny kjøretur</button><button id="watchExport">Eksporter lokal kjøreturlogg</button><button id="watchBaseline">Lagre referanse fra siste målinger</button><p class="muted">Kun lesing. Pause ved service. Bluefy må være i forgrunnen. Loggen lagres lokalt (siste 2400 målinger); ingen automatisk opplasting av kjørehistorikk. 4N14-profil fra 2016 er foreløpig kandidat for denne ECU. Varsler er observasjoner, ikke verifiserte Mitsubishi-grenser.</p><pre id="watchLatest">Ingen målinger.</pre><h3>DPF og olje</h3><pre id="watchDpf">Ingen målinger.</pre><h3>Nye avvik</h3><pre id="watchAlerts">Ingen registrerte avvik.</pre><p class="muted" id="watchStorage"></p></section><section><h2>2. Diagnostikk</h2><button data-cmd="ATI">Adapter-ID</button><button data-cmd="010C">Turtall</button><button data-cmd="0105">Kjølevæske</button><button data-cmd="0100">Støttede PID</button><button data-cmd="03">Les feilkoder</button><button data-cmd="2115">Mitsubishi 2115 rådata</button><button data-cmd="2117">4N14 oljedata (kandidat)</button><label for="block">4N14 referanseprofil (2016, 1860C97201)</label><select id="block"></select><button id="readBlock">Les valgt blokk</button><p>Verdiene er kandidater på 2011 ECU 1860B61405. Initialiser CAN før avlesning.</p><pre id="oil">Ingen profilavlesning</pre><label>Egendefinert lesekommando (AT/OBD)</label><input id="custom" placeholder="f.eks. 2115"><button id="customSend">Send etter kontroll</button><p class="muted">Lesedata er rådata inntil riktig Mitsubishi-formel er verifisert.</p><h3>Feilkodeoppslag</h3><label for="dtcInput">Skriv inn kode, f.eks. P252F</label><input id="dtcInput" maxlength="5"><button id="dtcLookup">Slå opp</button><pre id="dtcResult">Ingen kode valgt</pre>
 <p><a href="4n14-egr-dpf.html" style="color:#a7ddff">Illustrert 4N14-guide for EGR og DPF</a> · Referanse fra en annen CW1W.</p><h3>Outlander – siste målinger</h3><p>Verdier tolket med 2016-referanseprofilen. Tidspunkt viser når verdien sist ble lest.</p><ul id="dashboard"></ul><h3>Siste svar</h3><pre id="answer">–</pre><h3>Sesjonsmålinger</h3><pre id="measurements">Ingen</pre></section><section><h2>2b. ECU-kommandobibliotek</h2>
 <p class="muted">75 produsentspesifikke 4N14-blokker (273 profilerte målepunkter), standardiserte OBD-lesefunksjoner og kildebelagte MUT-III-referanser. Alle er merket med kilde og bekreftelsesstatus.</p>
 <label for="catalogGroup">Kommandotype</label><select id="catalogGroup"><option value="all">Alle kjørbare lesekommandoer</option><option value="live">Svar fra denne ECU 09.11</option><option value="obd">OBD-standard lesing</option><option value="profile">4N14 produsentdata</option></select>
@@ -38,7 +38,7 @@ Adressen er foreløpig ikke knyttet til en måleverdi på denne Outlanderen.</p>
 <input id="traceFile" type="file" accept=".json,application/json">
 <pre id="scanStatus">Ingen kartlegging</pre><h3>Totalskann – lagret rapport</h3><button id="exportLastScan">Last ned siste totalskann (JSON)</button><button id="exportScanSummary">Last ned diagnoseoppsummering (TXT)</button><pre id="localScanSummary">Ingen lagret totalskann</pre><h3>Tidligere skanninger</h3><pre id="scanHistorySummary">Ingen historikk</pre><pre id="replay"></pre></section></main><script>
 (()=>{'use strict';const $=x=>document.getElementById(x), loglines=[], results=[];let dev=null,tx=null,rx=null,buffer='',pending=null,bridgeActive=false,bridgeTimer=null,bridgeBase='',bridgeKey='',canReady=false,connecting=false,manualDisconnect=false,resuming=false,bridgeRequested=true,bridgeStarting=false,bridgeEpoch=0;const svc='0000fff0-0000-1000-8000-00805f9b34fb';
-function log(level,s){let line=`${new Date().toISOString()} [${level}] ${s}`;loglines.push(line);$('log').textContent=loglines.join('\n');console.log(line)}function err(e){return `${e?.name||'Error'}: ${e?.message||String(e)}`}function stat(s){$('status').textContent=s}function connected(){return !!(dev?.gatt?.connected&&tx&&rx)}
+function log(level,s){if(loglines.length>=1000)loglines.splice(0,100);let line=`${new Date().toISOString()} [${level}] ${s}`;loglines.push(line);$('log').textContent=loglines.join('\n');console.log(line)}function err(e){return `${e?.name||'Error'}: ${e?.message||String(e)}`}function stat(s){$('status').textContent=s}function connected(){return !!(dev?.gatt?.connected&&tx&&rx)}
 function receive(e){let v=e.target.value;let s=new TextDecoder().decode(new Uint8Array(v.buffer,v.byteOffset,v.byteLength));log('RX',JSON.stringify(s));buffer+=s;$('answer').textContent=buffer;if(pending&&buffer.includes('>')){const p=pending;pending=null;clearTimeout(p.timeout);const result=buffer.trim();results.unshift({time:new Date().toISOString(),command:p.command,response:result});results.length=Math.min(results.length,25);$('measurements').textContent=results.map(x=>`${x.time} ${x.command}: ${x.response}`).join('\n');if(blocks.has(p.command)) showBlock(p.command,result);if(['03','07','0A'].includes(p.command)){
   const codes = storedCodes(result, {'03':'43','07':'47','0A':'4A'}[p.command]);
   $('dtcResult').textContent = codes === null ? 'Ingen dekodbar respons for modus ' + p.command + '. Se råsvaret.' :
@@ -591,6 +591,7 @@ function mutStatusRestore(){
 }
 mutStatusRestore();
 $('mutOilReset').onclick=async()=>{
+  if(watchEnabled){mutProgress('Pause motorvakt før service.');return;}
   if(mutOilBusy||connecting||resuming||scanRunning||p252fRunning||pending||!connected()){
     mutProgress('Avbrutt: KDIAG må være tilkoblet og ingen avlesning kan pågå.');return;
   }
@@ -713,7 +714,7 @@ function onKdiagDisconnected(event){
   if(!document.hidden)void resumeKdiag();
 }
 async function resumeKdiag(){
-  if(resuming || connecting || bridgeStarting || manualDisconnect || !dev || document.hidden || pending || scanRunning || mutOilBusy)return;
+  if(resuming || connecting || bridgeStarting || bridgePollBusy || manualDisconnect || !dev || document.hidden || pending || scanRunning || mutOilBusy || p252fRunning)return;
   if(connected() && canReady && (!bridgeRequested || bridgeActive || $('session').value.trim().length<24))return;
   resuming=true;
   try{
@@ -837,6 +838,7 @@ $('catalogRead').onclick=async()=>{
 };
 // Optional separate check of standard PIDs absent from first live 81-command scan.
 $('catalogScanExtras').onclick=async()=>{
+ if(pending||watchBusy||mutOilBusy||p252fRunning||connecting||resuming){log('INFO','Avslutt pågående lesing før kartlegging');return;}
  if(!connected()){log('FEIL','Koble til KONNWEI først');return}
  if(scanRunning){log('FEIL','Kartlegging pågår');return}
  const extra=standardReads.filter(x=>x[2]!=='live').map(x=>x[0]);
@@ -881,7 +883,7 @@ $('catalogScanExtras').onclick=async()=>{
 };
 refreshCatalog();
 async function read(cmd){try{cmd=String(cmd).trim().toUpperCase();if(scanRunning)throw Error('Kartlegging pågår');if(!safeReadCommands.has(cmd))throw Error('Ikke i verifisert/standard lesekatalog – utestede skrivesekvenser er sperret');if(!canReady)await init();await run(cmd)}catch(e){log('FEIL',err(e))}}
-$('connect').onclick=connect;$('disconnect').onclick=()=>{manualDisconnect=true;stopBridge();abortPendingRead();dev?.gatt?.disconnect();tx=rx=null;canReady=false;stat('Frakoblet')};$('init').onclick=()=>init().catch(e=>log('FEIL','CAN-initialisering: '+err(e)));document.querySelectorAll('[data-cmd]').forEach(el=>el.onclick=()=>read(el.dataset.cmd));$('customSend').onclick=()=>read($('custom').value.trim().toUpperCase());$('clearCodes').onclick=async()=>{if(!connected())return alert('Koble til KDIAG først.');if(!confirm('Slette standard OBD-feilkoder med modus 04? Dette kan fjerne nyttige feildata og nullstille readiness.'))return;if(!confirm('Bekreft én gang til: SEND 04 TIL ECU NÅ?'))return;try{await run('04');log('VARSEL','Modus 04 sendt etter lokal dobbel bekreftelse')}catch(e){log('FEIL',err(e))}};
+$('connect').onclick=connect;$('disconnect').onclick=()=>{manualDisconnect=true;stopBridge();abortPendingRead();dev?.gatt?.disconnect();tx=rx=null;canReady=false;stat('Frakoblet')};$('init').onclick=()=>init().catch(e=>log('FEIL','CAN-initialisering: '+err(e)));document.querySelectorAll('[data-cmd]').forEach(el=>el.onclick=()=>read(el.dataset.cmd));$('customSend').onclick=()=>read($('custom').value.trim().toUpperCase());$('clearCodes').onclick=async()=>{if(watchEnabled)return alert('Pause motorvakt før service.');if(!connected())return alert('Koble til KDIAG først.');if(!confirm('Slette standard OBD-feilkoder med modus 04? Dette kan fjerne nyttige feildata og nullstille readiness.'))return;if(!confirm('Bekreft én gang til: SEND 04 TIL ECU NÅ?'))return;try{await run('04');log('VARSEL','Modus 04 sendt etter lokal dobbel bekreftelse')}catch(e){log('FEIL',err(e))}};
 const DEFAULT_BRIDGE='https://smed-obd-i2kp.onrender.com';
 $('bridge').value=DEFAULT_BRIDGE;
 // The device credential belongs to this Bluefy installation, never to public GitHub.
@@ -901,9 +903,10 @@ $('rememberDevice').onchange=saveDeviceToken;
 $('session').addEventListener('change',saveDeviceToken);
 $('session').addEventListener('blur',saveDeviceToken);
 function base(){const u=new URL($('bridge').value.trim());if(u.protocol!=='https:'&&u.hostname!=='localhost')throw Error('Bro må bruke HTTPS');return u.origin}
-async function api(path,method='GET',body){let res=await fetch(bridgeBase+path,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+bridgeKey},body:body?JSON.stringify(body):undefined,cache:'no-store'});if(!res.ok)throw Error('Bro HTTP '+res.status);return res.json()}
-async function poll(epoch){if(!bridgeActive||epoch!==bridgeEpoch)return;try{let r=await api('/device/next');if(!bridgeActive||epoch!==bridgeEpoch)return;if(r.task){let command=r.task.command;let answer,ok=true;try{if(r.task.operation==='clear_obd_dtc'){
+async function api(path,method='GET',body){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),8000);try{let res=await fetch(bridgeBase+path,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+bridgeKey},body:body?JSON.stringify(body):undefined,cache:'no-store',signal:controller.signal});if(!res.ok)throw Error('Bro HTTP '+res.status);return await res.json()}finally{clearTimeout(timer)}}
+async function poll(epoch){if(!bridgeActive||epoch!==bridgeEpoch)return;if(watchBusy||pending||mutOilBusy||p252fRunning||scanRunning){bridgeTimer=setTimeout(()=>poll(epoch),1500);return}bridgePollBusy=true;try{let r=await api('/device/next');if(!bridgeActive||epoch!==bridgeEpoch)return;if(r.task){let command=r.task.command;let answer,ok=true;try{if(r.task.operation==='clear_obd_dtc'){
   if(command!=='04')throw Error('Ugyldig skriveoperasjon');
+  if(watchEnabled)throw Error('Pause motorvakt før eventuell serviceoperasjon; ingen ECU-endring sendt');
   log('VARSEL','Fjernforespørsel: OBD modus 04 feilkodesletting');
   if(!confirm('SMED ønsker å slette standard OBD-feilkoder (modus 04). Dette sletter også freeze-frame og kan nullstille readiness. Godkjenne?'))throw Error('Fjernsletting avslått på telefonen');
   if(!confirm('SISTE BEKREFTELSE: Send 04 til ECU nå?'))throw Error('Fjernsletting ikke endelig godkjent');
@@ -913,9 +916,9 @@ async function poll(epoch){if(!bridgeActive||epoch!==bridgeEpoch)return;try{let 
 }else{
   if(!safeReadCommands.has(command))throw Error('Fjernkommando ikke i godkjent lesekatalog');
   answer=await run(command);
-}}catch(e){answer=err(e);ok=false}await api('/device/result','POST',{id:r.task.id,ok,response:answer})}}catch(e){log('BRO',err(e))}if(bridgeActive&&epoch===bridgeEpoch)bridgeTimer=setTimeout(()=>poll(epoch),1500)}
+}}catch(e){answer=err(e);ok=false}await api('/device/result','POST',{id:r.task.id,ok,response:answer})}}catch(e){log('BRO',err(e))}finally{bridgePollBusy=false}if(bridgeActive&&epoch===bridgeEpoch)bridgeTimer=setTimeout(()=>poll(epoch),1500)}
 async function startBridge(){
-  if(bridgeActive || bridgeStarting || !bridgeRequested || manualDisconnect)return;
+  if(bridgeActive || bridgeStarting || bridgePollBusy || !bridgeRequested || manualDisconnect)return;
   bridgeStarting=true;
   const epoch=bridgeEpoch;
   try{
@@ -924,7 +927,7 @@ async function startBridge(){
     if(!canReady)await init();
     bridgeBase=base();bridgeKey=$('session').value.trim();
     if(bridgeKey.length<24)throw Error('Enhetskoden må være minst 24 tegn');
-    await api('/device/hello','POST',{device:'KONNWEI KDIAG',version:'0.30'});
+    await api('/device/hello','POST',{device:'KONNWEI KDIAG',version:'0.31'});
     if(epoch!==bridgeEpoch || !connected() || !bridgeRequested || manualDisconnect)return;
     bridgeActive=true;saveDeviceToken();
     $('bridgeStatus').textContent='Bro aktiv: KDIAG + Render';
@@ -936,5 +939,103 @@ async function startBridge(){
 function stopBridge(){bridgeActive=false;bridgeEpoch++;clearTimeout(bridgeTimer);$('bridgeStatus').textContent='Bro ikke aktiv'}
 $('bridgeOn').onclick=()=>{bridgeRequested=true;void startBridge()};
 $('bridgeOff').onclick=()=>{bridgeRequested=false;stopBridge()};
-$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(loglines.join('\n'))}catch(e){log('FEIL',err(e))}};$('export').onclick=()=>{const url=URL.createObjectURL(new Blob([loglines.join('\n')],{type:'text/plain'}));let a=document.createElement('a');a.href=url;a.download='SmedOBD-v012-logg.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};window.addEventListener('unhandledrejection',e=>log('FEIL','Promise: '+err(e.reason)));log('INFO','v0.30 startet – automatisk gjenoppkobling og beskyttet fjernbro');
+
+const WATCH_KEY='smed-obd-motorwatch-v1',WATCH_LIMIT=2400;
+const watchSchedule=['010C','0105','010D','0104','010B','0110','0142','214C','2102','2110','2111','2117','2112','214F','2151','21B0','21B1','03'];
+let watchEnabled=true,watchBusy=false,bridgePollBusy=false,watchIndex=0,watchHistory=[],watchAlerts=[],watchReference=null,watchLatest={},watchTrip='trip-'+Date.now(),watchStorageOK=true,watchLastSave=0;
+const watchLabels={'010C':'Turtall','0105':'Kjølevæske','010D':'Hastighet','0104':'Motorbelastning','010B':'Absolutt innsugstrykk','0110':'Luftmasse','0142':'ECU-spenning','214C':'Dieseltrykk','2102':'Temperatur/ladetrykk','2110':'DPF temperatur/differansetrykk','2111':'Sotbelastning','2117':'Beregnet olje/dieselfortynning','2112':'Regenereringsteller','214F':'Turbo måltrykk','2151':'Innsprøytning','21B0':'Dyse 1/2','21B1':'Dyse 3/4','03':'Feilkoder'};
+const watchDpfCommands=new Set(['2110','2111','2112','2117']);
+function watchDecode(command,raw){
+  if(command==='03'){const codes=storedCodes(raw);return codes===null?null:{codes}}
+  const prefix=(command.startsWith('21')?'61':'41')+command.slice(2);
+  const frames=normalizeElmPayload(raw).toUpperCase().replace(/>/g,'').split(/[\r\n]+/).map(x=>x.replace(/\s+/g,'')).filter(x=>x.startsWith(prefix)&&/^(?:[0-9A-F]{2})+$/.test(x));
+  if(frames.length!==1)return null;
+  const bytes=frames[0].match(/../g).map(x=>parseInt(x,16));
+  if(command.startsWith('21')){
+    const data={};
+    for(const f of blocks.get(command)||[]){
+      if(bytes.length<f.byte+f.length)continue;
+      const n=bytes.slice(f.byte,f.byte+f.length).reduce((a,b)=>a*256+b,0);
+      if(f.unavailableRaw===n||(Array.isArray(f.unavailableRaw)&&f.unavailableRaw.includes(n)))continue;
+      data[f.name]={value:Number((n*f.factor+f.offset).toFixed(6)),unit:f.unit||''};
+    }
+    return Object.keys(data).length?{candidate:true,data}:null;
+  }
+  const a=bytes[2],b=bytes[3];
+  if(a===undefined)return null;
+  const definitions={'010C':[b===undefined?NaN:(256*a+b)/4,'rpm'],'0105':[a-40,'°C'],'010D':[a,'km/t'],'0104':[100*a/255,'%'],'010B':[a,'kPa'],'0110':[b===undefined?NaN:(256*a+b)/100,'g/s'],'0142':[b===undefined?NaN:(256*a+b)/1000,'V']};
+  const x=definitions[command];return x&&Number.isFinite(x[0])?{value:Number(x[0].toFixed(3)),unit:x[1]}:null;
+}
+function watchAlert(key,message){
+  if(watchAlerts.some(x=>x.trip===watchTrip&&x.key===key))return;
+  watchAlerts.push({trip:watchTrip,key,message,at:new Date().toISOString()});watchAlerts=watchAlerts.slice(-100);
+}
+function watchAnalyze(entry,history){
+  if(entry.command==='03')for(const code of entry.decoded?.codes||[])watchAlert('dtc:'+code,'Lagret OBD-feilkode '+code+' – undersøk årsaken.');
+  if(entry.command==='0105'&&entry.decoded?.value>=110){
+    const last=history.filter(x=>x.trip===entry.trip&&x.command==='0105'&&x.decoded&&x.at>=entry.at-180000).slice(-3);
+    if(last.length===3&&last.every(x=>x.decoded.value>=110))watchAlert('coolant-high','Kjølevæske minst 110 °C i tre målinger. Generell kontrollgrense, ikke Mitsubishi-spesifikasjon. Følg bilens temperaturvarsler.');
+  }
+  if(entry.command==='214C'&&entry.decoded?.candidate){
+    const last=history.filter(x=>x.trip===entry.trip&&x.command==='214C'&&x.decoded?.data&&x.at>=entry.at-300000).slice(-3);
+    const pairs=last.map(x=>[x.decoded.data['Fuel pressure target']?.value,x.decoded.data['Fuel pressure']?.value]);
+    if(pairs.length===3&&pairs.every(([t,v])=>Number.isFinite(t)&&Number.isFinite(v)&&t>=20&&Math.abs(t-v)>=Math.max(10,t*.2))&&Math.max(...pairs.map(x=>x[0]))-Math.min(...pairs.map(x=>x[0]))<=5)watchAlert('rail-difference','Gjentatt avvik mellom ønsket og målt dieseltrykk ved lignende måltrykk. Kandidatprofil og generell analysegrense; må verifiseres.');
+  }
+}
+function watchRestore(){
+  try{const x=JSON.parse(localStorage.getItem(WATCH_KEY)||'null');if(!x)return;
+    watchEnabled=x.enabled!==false;watchHistory=Array.isArray(x.history)?x.history.slice(-WATCH_LIMIT):[];watchAlerts=Array.isArray(x.alerts)?x.alerts.slice(-100):[];watchReference=x.reference||null;
+    const last=watchHistory.at(-1);if(last&&Date.now()-last.at<600000){watchTrip=last.trip;for(const item of watchHistory.filter(i=>i.trip===watchTrip))watchLatest[item.command]=item;}
+  }catch(e){watchStorageOK=false}
+}
+function watchSave(force=false){
+  if(!force&&Date.now()-watchLastSave<10000)return;
+  watchLastSave=Date.now();
+  try{localStorage.setItem(WATCH_KEY,JSON.stringify({enabled:watchEnabled,history:watchHistory,alerts:watchAlerts,reference:watchReference}));watchStorageOK=true}
+  catch(e){watchStorageOK=false}
+}
+function watchRender(){
+  const fmt=x=>{
+    const d=x.decoded,age=Math.round((Date.now()-x.at)/1000);
+    const desc=!d?'Ingen dekodbar respons':d.codes?(d.codes.join(', ')||'Ingen lagrede standardkoder'):d.data?Object.entries(d.data).map(([k,v])=>k+': '+v.value+' '+v.unit).join(' · ')+' [kandidat]':d.value+' '+d.unit;
+    return watchLabels[x.command]+' · '+age+' s siden'+(age>180?' [eldre måling]':'')+'\n'+desc;
+  };
+  const items=watchSchedule.map(c=>watchLatest[c]).filter(Boolean);
+  $('watchLatest').textContent=items.filter(x=>!watchDpfCommands.has(x.command)).map(fmt).join('\n\n')||'Ingen målinger.';
+  $('watchDpf').textContent=items.filter(x=>watchDpfCommands.has(x.command)).map(fmt).join('\n\n')||'Ingen målinger.';
+  const alerts=watchAlerts.filter(x=>x.trip===watchTrip);
+  $('watchAlerts').textContent=alerts.map(x=>x.at+' · '+x.message).join('\n')||'Ingen registrerte avvik. Ikke en garanti for feilfri motor.';
+  $('watchStatus').textContent=!watchEnabled?'Motorvakt pauset':document.hidden?'Bluefy i bakgrunnen – målinger kan være pauset':!connected()?'Venter på KDIAG':!canReady?'Venter på CAN':scanRunning||mutOilBusy||p252fRunning?'Motorvakt pauset under diagnose/service':'Motorvakt aktiv · '+watchHistory.filter(x=>x.trip===watchTrip).length+' lagrede forsøk denne turen';
+  $('watchToggle').textContent=watchEnabled?'Pause motorvakt':'Start motorvakt';
+  $('watchStorage').textContent=(watchStorageOK?'Lokal lagring aktiv':'Lokal lagring feilet – eksporter loggen før du lukker siden')+' · '+watchHistory.length+'/'+WATCH_LIMIT+' målinger · '+(watchReference?'Referanse lagret '+watchReference.at:'Ingen egen referanse lagret');
+}
+async function watchTick(){
+  if(!watchEnabled||document.hidden||watchBusy||bridgePollBusy||connecting||resuming||bridgeStarting||scanRunning||mutOilBusy||p252fRunning||pending||$('fullScan').disabled||!connected()||!canReady){watchRender();return}
+  const command=watchSchedule[watchIndex++%watchSchedule.length];
+  if(!safeReadCommands.has(command))return;
+  watchBusy=true;
+  const trip=watchTrip;
+  let raw='',decoded=null;
+  try{raw=await run(command);decoded=watchDecode(command,raw)}catch(e){raw=err(e)}
+  finally{
+    const entry={trip,at:Date.now(),command,raw:raw.slice(0,1024),decoded};
+    watchHistory.push(entry);if(watchHistory.length>WATCH_LIMIT)watchHistory.splice(0,watchHistory.length-WATCH_LIMIT);
+    if(trip===watchTrip){watchLatest[command]=entry;watchAnalyze(entry,watchHistory);}
+    watchSave();watchRender();watchBusy=false;
+  }
+}
+watchRestore();watchRender();
+$('watchToggle').onclick=()=>{watchEnabled=!watchEnabled;watchSave(true);watchRender()};
+$('watchNewTrip').onclick=()=>{if(watchBusy)return;watchTrip='trip-'+Date.now();watchLatest={};watchSave(true);watchRender()};
+$('watchExport').onclick=()=>{watchSave(true);saveLocalDownload('SmedOBD-kjorelogg-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({schema:1,vehicle:'Outlander 2011 4N14',referenceProfile:'2016 candidate',history:watchHistory,alerts:watchAlerts,reference:watchReference},null,2),'application/json')};
+$('watchBaseline').onclick=()=>{
+  const recent=watchHistory.filter(x=>x.trip===watchTrip&&x.decoded).slice(-180);
+  if(recent.length<18){$('watchStorage').textContent='Minst 18 vellykkede målinger kreves før egen referanse kan lagres.';return;}
+  watchReference={at:new Date().toISOString(),note:'Brukervalgt sammenligningsgrunnlag; ikke bekreftet frisk motor.',samples:recent};watchSave(true);watchRender();
+};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)watchSave(true);watchRender()});
+window.addEventListener('pagehide',()=>watchSave(true));
+setInterval(()=>void watchTick(),2500);
+
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(loglines.join('\n'))}catch(e){log('FEIL',err(e))}};$('export').onclick=()=>{const url=URL.createObjectURL(new Blob([loglines.join('\n')],{type:'text/plain'}));let a=document.createElement('a');a.href=url;a.download='SmedOBD-v012-logg.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};window.addEventListener('unhandledrejection',e=>log('FEIL','Promise: '+err(e.reason)));log('INFO','v0.31 startet – motorvakt og lokal kjøreturlogg');
 })();</script></body></html>

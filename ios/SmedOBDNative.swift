@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreBluetooth
 import UIKit
+import Security
 
 struct Sample: Codable, Identifiable {
     let id: UUID
@@ -22,7 +23,48 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
     private let transmit = CBUUID(string: "FFF2")
     private let receive = CBUUID(string: "FFF1")
     private let initCommands = ["ATE0", "ATL0", "ATSP6", "ATSH7E0"]
-    private let reads = ["010C", "0105", "0104", "010B", "0110", "0142", "010D"]
+    private let reads = ["010C", "0105", "010D", "0104", "010B", "0110", "0142", "214C", "2102", "2110", "2111", "2117", "2112", "214F", "2151", "21B0", "21B1", "03"]
+    @Published private(set) var bridgeStatus = "Bro ikke konfigurert"
+    private var bridge = NativeBridge()
+    private var remote: NativeBridge.TaskItem?
+    private var inFlightRemote: NativeBridge.TaskItem?
+    private var bridgeBusy = false
+    private var bridgeGeneration = 0
+    private var lastBridgePoll = Date.distantPast
+    private var bridgeHello = false
+
+    func configureBridge(_ token: String) {
+        guard bridge.setToken(token) else { bridgeStatus = "Ugyldig kode eller feil ved sikker lagring"; return }
+        bridgeGeneration += 1; bridgeBusy = false; bridgeHello = false; remote = nil
+        bridgeStatus = "Bro konfigurert"; lastBridgePoll = .distantPast
+    }
+    private func pumpBridge() {
+        guard running, bridge.configured, !bridgeBusy, remote == nil, inFlightRemote == nil,
+              Date().timeIntervalSince(lastBridgePoll) >= 1.5 else { return }
+        bridgeBusy = true; lastBridgePoll = Date(); let generation = bridgeGeneration
+        bridge.poll(hello: !bridgeHello) { [weak self] result in
+            guard let self, self.bridgeGeneration == generation else { return }
+            self.bridgeBusy = false
+            guard self.running else { return }
+            switch result {
+            case .success(let task):
+                self.bridgeHello = true; self.bridgeStatus = "Bro aktiv"; self.remote = task
+            case .failure(let error):
+                self.bridgeHello = false; self.bridgeStatus = "Bro: " + error.localizedDescription
+            }
+        }
+    }
+    private func finishRemote(_ raw: String, ok: Bool) {
+        guard let task = inFlightRemote else { return }
+        inFlightRemote = nil
+        let generation = bridgeGeneration
+        bridgeBusy = true
+        bridge.result(task, raw: raw, ok: ok) { [weak self] result in
+            guard let self, self.bridgeGeneration == generation else { return }
+            self.bridgeBusy = false
+            if case .failure(let error) = result { self.bridgeStatus = "Resultat ikke bekreftet: " + error.localizedDescription; self.bridgeHello = false }
+        }
+    }
     private var initIndex = 0
     private var readIndex = 0
     private var pending: String?
@@ -56,6 +98,7 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
 
     func stop() {
         running = false
+        remote = nil; bridgeHello = false
         defaults.set(false, forKey: "obd.running")
         retry?.cancel(); retry = nil
         clearIO()
@@ -68,6 +111,7 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
     private func clearIO() {
         timeout?.cancel(); timeout = nil
         next?.cancel(); next = nil
+        if inFlightRemote != nil { finishRemote("Bluetooth avbrutt", ok: false) }
         pending = nil; buffer.removeAll()
         tx = nil; rx = nil
         initIndex = 0; readIndex = 0
@@ -207,7 +251,15 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
         guard running, pending == nil, let p = peripheral, p.state == .connected,
               let t = tx, rx?.isNotifying == true, p.canSendWriteWithoutResponse else { return }
         next?.cancel(); next = nil
-        let command = initIndex < initCommands.count ? initCommands[initIndex] : reads[readIndex % reads.count]
+        let command: String
+        if initIndex < initCommands.count { command = initCommands[initIndex] }
+        else if let task = remote {
+            remote = nil; inFlightRemote = task
+            if !reads.contains(task.command) || (task.operation != nil && task.operation != "read") {
+                finishRemote("Avvist: bare godkjente lesekommandoer", ok: false)
+                command = reads[readIndex % reads.count]
+            } else { command = task.command }
+        } else { command = reads[readIndex % reads.count] }
         pending = command; buffer.removeAll()
         let work = DispatchWorkItem { [weak self, weak p] in
             guard let self, let p, self.pending == command else { return }
@@ -234,11 +286,12 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
             initIndex += 1
             status = initIndex == initCommands.count ? "CAN klar – leser motor" : "Initialiserer CAN"
         } else {
-            readIndex += 1
+            if inFlightRemote != nil { finishRemote(raw, ok: true) } else { readIndex += 1 }
             let sample = Sample(id: UUID(), date: Date(), command: command, raw: raw, value: Self.decode(command, raw))
             samples.append(sample)
             if samples.count > 5000 { samples.removeFirst(samples.count - 5000) }
             persist()
+            pumpBridge()
         }
         // Each BLE response drives the next request; no webview is required.
         // iOS can still suspend or throttle execution. Foreground pacing is deliberate.
@@ -286,6 +339,7 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
 
 @main struct SmedOBDNative: App {
     @StateObject private var obd = Kdiag()
+    @State private var token = ""
     var body: some Scene {
         WindowGroup {
             NavigationStack {
@@ -295,7 +349,10 @@ final class Kdiag: NSObject, ObservableObject, CBCentralManagerDelegate, CBPerip
                         Button(obd.running ? "Stopp motorvakt" : "Start motorvakt") {
                             if obd.running { obd.stop() } else { obd.start() }
                         }
-                        Text("Kun lesing. Testversjon uten serverbro.").font(.caption)
+                        Text("Kun lesing. Bakgrunnskjøring kan begrenses av iOS.").font(.caption)
+                        Text(obd.bridgeStatus)
+                        SecureField("Privat enhetskode", text: $token).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        Button("Koble til Smed-bro") { obd.configureBridge(token); token = "" }.disabled(token.count < 24)
                     }
                     Section("Siste målinger") {
                         ForEach(Array(obd.samples.suffix(30).reversed())) { sample in
